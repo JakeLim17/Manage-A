@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+client_secret*.json
+service-account*.json
+*.pem
+*.key
+.local/
+output/
+.output/
+node_modules/
+.DS_Store
+coverage/
