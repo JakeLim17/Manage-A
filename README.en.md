@@ -77,6 +77,8 @@ Project visualization and management work without analytics credentials. `127.0.
 
 ## Project service accounts and AI setup prompts
 
+The overview shows GitHub, Vercel, and database accounts beside each project, with an account filter to group projects. Register multiple logins with aliases such as Personal 1, Personal 2, and Company through **Add account (`계정 추가`)**. Choose a project and use **Select accounts (`사용 계정 선택`)** to bind each service independently. **Check this project (`이 프로젝트 계정 확인`)** reads the actual resource ownership. Automatic lookup tries registered connections and matches the exact project ID; an explicitly selected login never falls back to another account. **Manage registered accounts (`등록 계정 관리`)** lets you rename aliases or replace an individual token without replacing the other logins.
+
 Open **Service accounts (`서비스 계정`)**, choose a project, review its discovered IDs, and select **Check account (`계정 확인`)**. Targets are discovered from Git origin, Vercel project settings, Supabase project-ref files, and root Wrangler account configuration. Edit IDs explicitly or restore automatic discovery. Project `.env` secrets are not used for discovery.
 
 Authenticated official GitHub and Supabase CLIs can be reused. Vercel and Cloudflare require read tokens. Register tokens through **Connect token (`토큰 연결`)** in local mode. The Supabase picker lists accessible projects for you to choose; similar names are never automatically matched.
@@ -85,7 +87,7 @@ The screen separates resource ownership from the login used to query it. Supabas
 
 **Ask AI to connect (`AI에게 연동 요청`)** on the usage and service-account screens generates a copyable setup request. Copying does not send a message or run a connection. Never put tokens in AI chats or commits.
 
-Tokens entered locally are stored in Git-ignored `.local/service-credentials.json`. Optional token environment variables are documented in `.env.example`; locally saved tokens take precedence. Manual account labels are notes, not proof of a verified connection.
+Tokens entered locally are stored in Git-ignored `.local/service-credentials.json`. Optional token environment variables are documented in `.env.example`; legacy tokens and environment credentials remain separately selectable; automatic lookup tries available connections. Manual account labels are notes, not proof of a verified connection.
 
 ## Integration requirements
 

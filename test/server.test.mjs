@@ -100,6 +100,10 @@ test("service accounts protect writes, validate bindings and never verify an unb
   assert.equal(project.services.github.state, "error");
   assert.equal(project.services.github.accountName, undefined);
   assert.equal(typeof dashboard.serviceCredentials.github, "boolean");
+  assert.ok(Array.isArray(dashboard.serviceAccountRegistry));
+  assert.ok(dashboard.serviceAccountRegistry.every(a => !Object.hasOwn(a, "key")));
+  assert.equal((await fetch(base + "/api/connections/service-accounts", {method: "PUT", headers: {"Content-Type": "application/json", Origin: "https://evil.example"}, body: JSON.stringify({provider: "github", id: "github:cli", label: "renamed"})})).status, 403);
+  assert.equal((await post("/api/projects/demo", {serviceBindings: {github: {credentialId: "vercel:env"}}})).status, 400);
   assert.equal(
     (await fetch(base + "/.local/service-credentials.json")).status,
     404,

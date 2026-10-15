@@ -60,7 +60,8 @@ let data,
   mapPage = 0,
   flowMode = "architecture",
   routeFile = "",
-  projectFilter = "all";
+  projectFilter = "all",
+  accountFilter = "all";
 let impactFile = "",
   impactInspect = "",
   impactQuery = "",
@@ -295,7 +296,7 @@ function overview() {
         "chart",
       ],
     ]) +
-    `<div class="overview-grid"><div>${card("프로젝트와 데이터 흐름", overviewMap(), `<button class="text-button" data-nav="flow">상세 보기 ${icon("arrow")}</button>`)}${card("프로젝트", projectTable([...data.projects].sort((a, b) => (Date.parse(b.commits[0]?.date) || 0) - (Date.parse(a.commits[0]?.date) || 0)).slice(0, 5)), `<button class="text-button" data-nav="projects">전체 ${data.projects.length}개 ${icon("arrow")}</button>`)}</div><div>${card("AI 사용량", usageCards(), badge("출처·시각 표시", "gray"))}${card("지금 확인할 일", attentionPanel())}${overviewAnalytics()}</div></div>`
+    `${card("프로젝트별 연결 계정", accountOverview(), `<button class="text-button" data-nav="accounts">계정 관리 ${icon("arrow")}</button>`)}<div class="overview-grid"><div>${card("프로젝트와 데이터 흐름", overviewMap(), `<button class="text-button" data-nav="flow">상세 보기 ${icon("arrow")}</button>`)}${card("프로젝트", projectTable([...data.projects].sort((a, b) => (Date.parse(b.commits[0]?.date) || 0) - (Date.parse(a.commits[0]?.date) || 0)).slice(0, 5)), `<button class="text-button" data-nav="projects">전체 ${data.projects.length}개 ${icon("arrow")}</button>`)}</div><div>${card("AI 사용량", usageCards(), badge("출처·시각 표시", "gray"))}${card("지금 확인할 일", attentionPanel())}${overviewAnalytics()}</div></div>`
   );
 }
 function overviewMap() {
@@ -308,7 +309,7 @@ function overviewMap() {
         (Date.parse(a.commits[0]?.date) || 0),
   );
   const ps = ordered.slice(mapPage * 3, mapPage * 3 + 3);
-  return `<div class="map-toolbar">${badge("로컬 스캔", "green")}<span class="muted">${mapPage * 3 + 1}–${Math.min(mapPage * 3 + 3, data.projects.length)} / ${data.projects.length}개</span><button class="icon-button" id="map-prev" aria-label="이전 프로젝트" ${mapPage === 0 ? "disabled" : ""}>${icon("arrow", "flip")}</button><button class="icon-button" id="map-next" aria-label="다음 프로젝트" ${(mapPage + 1) * 3 >= data.projects.length ? "disabled" : ""}>${icon("arrow")}</button><button id="pause" class="icon-button" aria-label="흐름 ${paused ? "재생" : "일시정지"}">${icon(paused ? "play" : "pause")}</button></div><div class="overview-map ${paused ? "paused" : ""}"><div class="root-node"><img class="manage-logo" src="/logo.svg" alt=""><div>Manage-A<small>프로젝트 관리 대시보드</small></div></div><div class="map-trunk"></div><div class="project-nodes">${ps.map((p) => `<button class="map-project" data-project="${esc(p.id)}">${icon("folder")}<strong>${esc(p.name)}</strong>${p.website ? siteBadge(p) : ""}${runtimeBadge(p)}<small class="management-state">관리: ${esc(labels[p.status])}</small><small>${esc(p.stack.slice(0, 3).join(" / ") || "스택 미확인")}</small></button>`).join("")}</div><p class="map-caption">${icon("flow")} 프로젝트를 누르면 기능과 연결 구조를 볼 수 있어요.</p></div>`;
+  return `<div class="map-toolbar">${badge("로컬 스캔", "green")}<span class="muted">${mapPage * 3 + 1}–${Math.min(mapPage * 3 + 3, data.projects.length)} / ${data.projects.length}개</span><button class="icon-button" id="map-prev" aria-label="이전 프로젝트" ${mapPage === 0 ? "disabled" : ""}>${icon("arrow", "flip")}</button><button class="icon-button" id="map-next" aria-label="다음 프로젝트" ${(mapPage + 1) * 3 >= data.projects.length ? "disabled" : ""}>${icon("arrow")}</button><button id="pause" class="icon-button" aria-label="흐름 ${paused ? "재생" : "일시정지"}">${icon(paused ? "play" : "pause")}</button></div><div class="overview-map ${paused ? "paused" : ""}"><div class="root-node"><img class="manage-logo" src="/logo.svg" alt=""><div>Manage-A<small>프로젝트 관리 대시보드</small></div></div><div class="map-trunk"></div><div class="project-nodes">${ps.map((p) => `<button class="map-project" data-project="${esc(p.id)}">${icon("folder")}<strong>${esc(p.name)}</strong>${p.website ? siteBadge(p) : ""}${runtimeBadge(p)}${accountChips(p)}<small class="management-state">관리: ${esc(labels[p.status])}</small><small>${esc(p.stack.slice(0, 3).join(" / ") || "스택 미확인")}</small></button>`).join("")}</div><p class="map-caption">${icon("flow")} 프로젝트를 누르면 기능과 연결 구조를 볼 수 있어요.</p></div>`;
 }
 function languageBar(p) {
   const langs = p.inventory?.languages || [],
@@ -351,10 +352,10 @@ function deploymentBadge(p) {
     : badge(p.vercel ? "연결 파일 발견" : "미연결");
 }
 function projectTable(ps) {
-  return `<div class="table-wrap"><table><thead><tr><th>프로젝트 / 목적</th><th>개발 언어</th><th>로컬 실행</th><th>운영 사이트 / 배포 정보</th><th>변경</th><th></th></tr></thead><tbody>${ps
+  return `<div class="table-wrap"><table><thead><tr><th>프로젝트 / 목적</th><th>연결 계정</th><th>개발 언어</th><th>로컬 실행</th><th>운영 사이트 / 배포 정보</th><th>변경</th><th></th></tr></thead><tbody>${ps
     .map(
       (p) =>
-        `<tr><td><button class="project-name" data-project="${esc(p.id)}">${icon("folder")}<span>${esc(p.name)}<small>${esc(p.description)}</small></span></button>${p.website ? siteBadge(p) : ""}${runtimeBadge(p)}<small class="management-state">관리: ${esc(labels[p.status])}</small></td><td class="language-cell">${languageBar(p) || "소스 미확인"}</td><td>${badge(portLabel(p), p.localPorts?.some((v) => v.reachable && v.owned !== false) ? "green" : "gray")}<small>${
+        `<tr><td><button class="project-name" data-project="${esc(p.id)}">${icon("folder")}<span>${esc(p.name)}<small>${esc(p.description)}</small></span></button>${p.website ? siteBadge(p) : ""}${runtimeBadge(p)}<small class="management-state">관리: ${esc(labels[p.status])}</small></td><td>${accountChips(p)}</td><td class="language-cell">${languageBar(p) || "소스 미확인"}</td><td>${badge(portLabel(p), p.localPorts?.some((v) => v.reachable && v.owned !== false) ? "green" : "gray")}<small>${
           p.localPorts
             ?.filter((v) => v.reachable)
             .map((v) => ":" + v.port)
@@ -760,6 +761,21 @@ function settingsView() {
   return `${profileCard()}${connectionCenter()}${analyticsMatrix()}<div class="settings-grid">${card("실행과 접근", `<div class="settings-body">${badge(data.mode === "local" ? "로컬 전용으로 실행 중" : "인증된 웹 모드", "green")}<h3>기본은 내 컴퓨터에서만</h3><p>현재 로컬 서버는 기본적으로 127.0.0.1에만 열립니다. 계정 정보와 관리 데이터는 이 기기에 보관됩니다.</p><h3>다른 기기에서 보고 싶을 때</h3><p>가장 간단한 방법은 SSH 터널입니다. 원격 모드에는 16자 이상의 비밀번호와 접속 주소 설정이 필요하며 HTTPS 프록시와 함께 사용하세요.</p><code class="code-block">ssh -L 4310:127.0.0.1:4310 사용자@내컴퓨터</code><p class="muted">외부 공개는 자동으로 켜지지 않습니다. 상세 설정은 README를 확인하세요.</p></div>`)}${card("Google 통계 연결", `<div class="settings-body">${badge(data.googleConnected ? (data.googleAuthStatus?.method === "oauth" ? "Google 로그인 완료" : "인증 파일 등록") : "Google 미연결", data.googleConnected ? "green" : "gray")}<ol><li>Google Cloud에서 Analytics Data API, Analytics Admin API, Search Console API를 활성화하세요.</li><li>‘Google로 연결’에서 OAuth 클라이언트 JSON 경로를 지정하고 통계 읽기 권한을 승인하세요.</li><li>방문·검색에서 프로젝트를 고른 뒤 ‘통계 속성 찾기’로 해당 프로젝트의 속성을 선택하세요.</li><li>‘통계 가져오기’를 눌러 실제 수신을 확인하세요. 로그인 완료와 데이터 수신은 별도로 표시됩니다.</li></ol><p class="muted">기존 서비스 계정은 연결 창의 ‘서비스 계정 파일로 연결’에서 설정할 수 있어요. 인증 토큰과 키 내용은 브라우저로 보내지 않습니다.</p><button class="button primary" id="connect-google">${data.googleConnected ? "Google 연결 변경" : "Google로 연결"}</button> <button class="button" data-nav="analytics">방문·검색 열기</button></div>`)}${card("프로젝트 수집", `<div class="settings-body"><h3>자동으로 읽는 정보</h3><p>프로젝트 폴더, package.json, README, Git 브랜치와 최근 커밋, 변경 파일 수를 읽습니다. .env와 비밀 키는 수집하지 않습니다.</p><h3>직접 관리하는 정보</h3><p>운영 상태, 주요 기능, 설명, 연결 구조와 통계 속성 ID는 프로젝트 편집에서 관리하세요.</p><button class="button" id="refresh">${icon("refresh")} 프로젝트 다시 읽기</button></div>`)}${card("비용과 데이터", `<div class="settings-body"><h3>로컬 실행에 호스팅 비용이 들지 않아요</h3><p>별도 패키지 설치 없이 Node.js로 실행합니다. 외부 API와 원격 호스팅의 요금·할당량은 해당 계정의 조건을 따릅니다.</p><h3>로컬 보관</h3><p>직접 입력한 데이터는 .local/settings.json에 저장되며 Git에서 제외됩니다. 백업은 해당 파일을 안전한 위치에 복사하세요.</p><button class="button" id="export">${icon("download")} 관리 정보 JSON 내보내기</button></div>`)}</div>`;
 }
 function bind() {
+  $("#account-overview-filter")?.addEventListener("change", e => {accountFilter = e.target.value; render();});
+  $("#choose-project-accounts")?.addEventListener("click", chooseProjectAccounts);
+  $("#check-project-accounts")?.addEventListener("click", checkProjectAccounts);
+  $("#add-service-account")?.addEventListener("click", () => {
+    showModal("계정 추가", `<p>등록할 서비스를 선택하세요. 같은 서비스에 여러 계정을 추가할 수 있어요.</p><div class="section-toolbar">${Object.entries(serviceNames).map(([id,name]) => `<button class="button" data-add-provider="${id}">${name}</button>`).join("")}</div>`);
+    document.querySelectorAll("[data-add-provider]").forEach(el => el.onclick = () => connectService(el.dataset.addProvider));
+  });
+  document.querySelectorAll("[data-account-rename]").forEach(el => el.onclick = () => renameServiceAccount(el.dataset.accountRename));
+  document.querySelectorAll("[data-account-update]").forEach(el => el.onclick = () => {
+    const a = (data.serviceAccountRegistry || []).find(a => a.id === el.dataset.accountUpdate);
+    if (a) connectService(a.provider, a.id);
+  });
+  document.querySelectorAll("[data-account-open]").forEach(el => el.onclick = () => {
+    selected = el.dataset.accountOpen; sessionStorage.setItem("selectedProject", selected); location.hash = "accounts"; view = "accounts"; render();
+  });
   $("#choose-supabase-project")?.addEventListener(
     "click",
     chooseSupabaseProject,
@@ -1269,7 +1285,7 @@ function editSubscription(provider) {
 }
 function showModal(title, content) {
   const d = $("#modal");
-  d.innerHTML = `<div class="modal-head"><h2>${title}</h2><button class="icon-button" id="close-modal" aria-label="닫기">${icon("close")}</button></div>${content}`;
+  d.innerHTML = `<div class="modal-head"><h2>${esc(title)}</h2><button class="icon-button" id="close-modal" aria-label="닫기">${icon("close")}</button></div>${content}`;
   d.showModal();
   $("#close-modal").onclick = () => d.close();
 }
@@ -1872,6 +1888,8 @@ function connectApiUsage(provider) {
     e.preventDefault();
     await saveForm(e.target, "/api/connections/api-usage", {
       provider,
+      label: new FormData(e.target).get("label"),
+      ...(accountId ? {id: accountId} : {}),
       key: new FormData(e.target).get("key"),
     });
   };
@@ -1940,49 +1958,90 @@ function serviceStatus(row) {
           : "gray",
   );
 }
+function registeredAccounts(provider) {
+  return (data.serviceAccountRegistry || []).filter(a => a.provider === provider);
+}
+function accountLabel(row, provider) {
+  const account = registeredAccounts(provider).find(a => a.id === (row?.credentialId || row?.binding?.credentialId));
+  const verified = ["connected", "stale"].includes(row?.state);
+  return verified ? (account?.kind === "token" ? account.label : row.accountName) || "소속 미확인"
+    : account?.label || row?.binding?.accountLabel || (row?.target ? "미확인" : "연결 없음");
+}
+function accountChips(p) {
+  return `<span class="project-account-chips">${Object.entries(serviceNames).filter(([provider]) => provider !== "cloudflare" || p.services?.[provider]?.target).map(([provider, name]) => {
+    const r = p.services?.[provider], verified = ["connected", "stale"].includes(r?.state);
+    return `<span class="project-account-chip ${verified ? "is-known" : ""}" title="${esc([name, r?.accountName, r?.actor, r?.state === "stale" ? "재확인 필요" : verified ? "공식 조회 확인" : "소속 미확인"].filter(Boolean).join(" · "))}"><span>${provider === "supabase" ? "DB · Supabase" : name}</span><b>${esc(accountLabel(r, provider))}${!verified && r?.binding?.credentialId ? " · 미확인" : ""}</b></span>`;
+  }).join("")}</span>`;
+}
+function accountOverview() {
+  const owners = new Map();
+  for (const p of data.projects) for (const [provider, row] of Object.entries(p.services || {})) {
+    if (row.accountId && row.accountName) owners.set(provider + ":" + row.accountId, serviceNames[provider] + " · " + row.accountName);
+  }
+  const registrations = data.serviceAccountRegistry || [];
+  const options = [...registrations.map(a => ["credential:" + a.id, serviceNames[a.provider] + " · " + a.label]), ...Array.from(owners, ([id, label]) => ["owner:" + id, label])];
+  if (accountFilter !== "all" && !options.some(([id]) => id === accountFilter)) accountFilter = "all";
+  const projects = data.projects.filter(p => accountFilter === "all" || Object.entries(p.services || {}).some(([provider, r]) => accountFilter === "owner:" + provider + ":" + r.accountId || accountFilter === "credential:" + (r.credentialId || r.binding?.credentialId)));
+  return `<div class="account-overview-toolbar"><p class="card-note">프로젝트마다 사용하는 계정을 확인하세요. 계정 이름을 선택하면 해당 계정에 연결한 프로젝트만 보여요.</p><label>계정별로 보기 <select id="account-overview-filter"><option value="all">모든 계정</option>${options.map(([id,label]) => `<option value="${esc(id)}" ${accountFilter === id ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></label></div><div class="project-account-list">${projects.map(p => `<div class="project-account-item"><button class="project-name" data-account-open="${esc(p.id)}">${icon("folder")}<span>${esc(p.name)}</span></button>${accountChips(p)}<button class="text-button" data-account-open="${esc(p.id)}" aria-label="${esc(p.name)} 계정 관리">관리</button></div>`).join("") || '<p class="card-note">이 계정에 연결한 프로젝트가 없어요.</p>'}</div>`;
+}
+function accountRegistryView() {
+  const rows = (data.serviceAccountRegistry || []).filter(a => a.kind === "token");
+  return `<details class="account-registry-details"><summary>등록 계정 관리 · ${rows.length}개</summary><p class="card-note">계정은 한 번 등록하고 여러 프로젝트에서 선택하세요. 별칭을 바꾸면 연결한 프로젝트에도 반영돼요.</p><div class="registered-account-list">${rows.map(a => `<div><span><strong>${esc(a.label)}</strong><small>${serviceNames[a.provider]}${a.identity ? " · " + esc(a.identity) : ""}</small></span><button class="button" data-account-rename="${esc(a.id)}">별칭 변경</button><button class="button" data-account-update="${esc(a.id)}">토큰 변경</button></div>`).join("") || '<p class="card-note">아직 별도로 등록한 계정이 없어요. 로그인된 GitHub·Supabase CLI는 바로 조회할 수 있어요.</p>'}</div></details>`;
+}
 function accountsView() {
   const p = project();
   if (!p) return empty("프로젝트가 없어요", "프로젝트 폴더를 확인해 주세요.");
-  return `<div class="section-toolbar">${selector()}<button class="button" id="edit-service-bindings">연결 ID 편집</button><button class="button" id="choose-supabase-project">Supabase 프로젝트 찾기</button><button class="button" data-connection-prompt="services">${icon("ai")} AI에게 연동 요청</button></div>${card(
-    "이 프로젝트의 서비스 계정",
-    `<p class="card-note">프로젝트가 속한 계정·조직과 조회에 사용한 로그인 계정을 구분합니다. 파일 발견이나 직접 기록만으로 확인 완료가 되지 않습니다.</p><div class="service-register">${Object.entries(
-      serviceNames,
-    )
-      .map(([provider, name]) => {
-        const row = p.services?.[provider] || {},
-          b = row.binding || {};
-        return `<article class="service-account-row"><div class="service-provider"><strong>${name}</strong>${serviceStatus(row)}</div><div class="service-account-identity"><span class="muted">프로젝트 소속 계정 / 조직</span><strong>${esc(row.accountName || "아직 확인하지 않았어요")}</strong>${row.accountId ? `<code>${esc(row.accountId)}</code>` : ""}${b.accountLabel ? `<small>직접 기록: ${esc(b.accountLabel)}</small>` : ""}<small>조회 계정: ${esc(row.actor || "이메일·개인 계정 정보 미제공")}</small></div><div class="service-account-resource"><span class="muted">연결된 리소스</span><strong>${esc(row.resourceName || row.target || "연결 ID를 지정하세요")}</strong><small>연결 근거: ${esc(b.source || "미등록")}</small>${row.checkedAt ? `<small>${date(row.checkedAt)} · ${esc(row.source || "조회 시도")}</small>` : ""}${row.reason ? `<p class="connection-error">${esc(row.reason)}</p>` : ""}${row.resourceUrl ? `<a href="${esc(row.resourceUrl)}" target="_blank" rel="noopener noreferrer">서비스 화면 열기</a>` : ""}</div><div class="service-account-actions"><button class="button primary" data-service-sync="${provider}" ${row.target ? "" : "disabled"}>계정 확인</button><button class="button" data-service-connect="${provider}">${data.serviceCredentials?.[provider] ? "토큰 변경" : "토큰 연결"}</button></div></article>`;
-      })
-      .join(
-        "",
-      )}</div><p class="card-note">확인은 버튼을 눌렀을 때 읽기 API로 수행합니다. 15분이 지난 결과는 재확인 대상으로 표시합니다. GitHub와 Supabase는 로그인된 공식 CLI도 사용할 수 있습니다. Cloudflare는 지정 계정의 접근을 확인하며 개별 배포는 확인하지 않습니다.</p>`,
-  )}${card(
-    "프로젝트별 소속 한눈에 보기",
-    `<div class="table-wrap"><table class="service-account-matrix"><thead><tr><th>프로젝트</th>${Object.values(
-      serviceNames,
-    )
-      .map((n) => `<th>${n}</th>`)
-      .join("")}</tr></thead><tbody>${data.projects
-      .map(
-        (item) =>
-          `<tr><td><button class="text-button" data-account-project="${esc(item.id)}">${esc(item.name)}</button></td>${Object.keys(
-            serviceNames,
-          )
-            .map((provider) => {
-              const r = item.services?.[provider] || {};
-              return `<td><strong>${esc(r.accountName || r.binding?.accountLabel || "소속 미확인")}</strong><small>${esc(r.target || "연결 ID 없음")}</small>${serviceStatus(r)}</td>`;
-            })
-            .join("")}</tr>`,
-      )
-      .join("")}</tbody></table></div>`,
-  )}`;
+  return `<div class="section-toolbar">${selector()}<button class="button" id="choose-project-accounts">사용 계정 선택</button><button class="button primary" id="check-project-accounts">이 프로젝트 계정 확인</button><button class="button" id="add-service-account">계정 추가</button></div>${card("프로젝트별 연결 계정", accountOverview())}${card("선택한 프로젝트 · " + esc(p.name), `<div class="selected-project-accounts">${accountChips(p)}</div><p class="card-note">계정 별칭과 실제 소속을 함께 관리해요. 사용 계정을 선택하거나 자동 찾기로 접근 가능한 등록 계정을 확인하세요.</p><details><summary>연결 대상과 확인 내역</summary><div class="service-register">${Object.entries(serviceNames).map(([provider,name]) => {
+    const r = p.services?.[provider] || {}, b = r.binding || {};
+    return `<article class="service-account-row"><div class="service-provider"><strong>${name}</strong>${serviceStatus(r)}</div><div class="service-account-identity"><strong>${esc(accountLabel(r, provider))}</strong><small>실제 소속: ${esc(r.accountName || "미확인")}</small><small>조회 로그인: ${esc(r.actor || "미제공")}</small></div><div class="service-account-resource"><strong>${esc(r.resourceName || r.target || "연결 ID 없음")}</strong><small>${esc(b.source || "미등록")} · ${date(r.checkedAt)}</small>${r.reason ? `<p class="connection-error">${esc(r.reason)}</p>` : ""}${r.resourceUrl ? `<a href="${esc(r.resourceUrl)}" target="_blank" rel="noopener noreferrer">서비스 화면 열기</a>` : ""}</div><div class="service-account-actions"><button class="button" data-service-sync="${provider}" ${r.target ? "" : "disabled"}>계정 확인</button><button class="button" data-service-connect="${provider}">계정 추가</button></div></article>`;
+  }).join("")}</div><p class="card-note">15분이 지난 성공 결과는 재확인이 필요해요. Supabase는 소속 조직을 표시하며 Cloudflare는 지정 계정 접근만 확인해요.</p><div class="section-toolbar"><button class="button" id="edit-service-bindings">연결 ID 편집</button><button class="button" id="choose-supabase-project">Supabase 프로젝트 찾기</button><button class="button" data-connection-prompt="services">AI에게 연동 요청</button></div></details>${accountRegistryView()}`)}`;
+}
+function chooseProjectAccounts() {
+  const p = project();
+  showModal(p.name + " · 사용 계정", `<form id="project-accounts-form"><p>각 서비스에 사용할 계정을 고르세요. 자동 찾기는 등록된 계정으로 실제 프로젝트 ID를 조회해 접근 가능한 계정을 찾습니다.</p>${Object.entries(serviceNames).map(([provider,name]) => `<label class="field">${name}<select name="${provider}"><option value="">자동 찾기</option>${registeredAccounts(provider).map(a => `<option value="${esc(a.id)}" ${p.services?.[provider]?.binding?.credentialId === a.id ? "selected" : ""}>${esc(a.label)}${a.identity ? " · " + esc(a.identity) : ""}</option>`).join("")}</select></label>`).join("")}<p class="form-error" role="alert"></p><div class="modal-actions"><button class="button primary">프로젝트에 저장</button></div></form>`);
+  $("#project-accounts-form").onsubmit = async e => {
+    e.preventDefault();
+    const bindings = {};
+    for (const [provider, credentialId] of new FormData(e.target)) {
+      const {source, ...binding} = p.services[provider].binding;
+      bindings[provider] = {...binding, credentialId};
+    }
+    await saveForm(e.target, `/api/projects/${encodeURIComponent(p.id)}`, {serviceBindings: bindings});
+  };
+}
+async function checkProjectAccounts() {
+  const p = project(), button = $("#check-project-accounts");
+  button.disabled = true;
+  let passed = 0, failed = 0;
+  try {
+    for (const [provider, row] of Object.entries(p.services || {})) {
+      if (!row.target) continue;
+      button.textContent = serviceNames[provider] + " 확인 중…";
+      const result = await api(`/api/projects/${encodeURIComponent(p.id)}/services`, {method: "POST", body: JSON.stringify({provider})});
+      result.state === "connected" ? passed++ : failed++;
+    }
+    await load();
+    toast(passed + "개 계정 확인" + (failed ? " · " + failed + "개 재확인 필요" : "") + (!passed && !failed ? " · 연결 ID를 먼저 등록하세요" : ""));
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = false; button.textContent = "이 프로젝트 계정 확인"; }
+}
+function renameServiceAccount(id) {
+  const a = (data.serviceAccountRegistry || []).find(a => a.id === id);
+  if (!a) return;
+  showModal("계정 별칭 변경", `<form id="rename-account-form">${field("별칭", "label", a.label, "개인① / 회사 등")}<p class="form-error" role="alert"></p><div class="modal-actions"><button class="button primary">변경</button></div></form>`);
+  $("#rename-account-form").onsubmit = async e => {
+    e.preventDefault();
+    const form = e.target;
+    try { await api("/api/connections/service-accounts", {method: "PUT", body: JSON.stringify({provider: a.provider, id, label: new FormData(form).get("label")})}); $("#modal").close(); await load(); }
+    catch (error) { form.querySelector(".form-error").textContent = error.message; }
+  };
 }
 async function chooseSupabaseProject() {
   const p = project();
   if (!p) return;
   try {
     const value = await api(
-      "/api/connections/service-accounts/supabase/projects",
+      `/api/connections/service-accounts/supabase/projects?account=${encodeURIComponent(p.services?.supabase?.binding?.credentialId || p.services?.supabase?.credentialId || "")}`,
     );
     showModal(
       "Supabase 프로젝트 선택",
@@ -1994,7 +2053,7 @@ async function chooseSupabaseProject() {
       await saveForm(e.target, `/api/projects/${encodeURIComponent(p.id)}`, {
         serviceBindings: {
           ...p.serviceBindings,
-          supabase: { projectRef: ref },
+          supabase: { ...p.serviceBindings?.supabase, projectRef: ref, credentialId: value.projects.find(r => r.projectRef === ref)?.credentialId || p.services?.supabase?.binding?.credentialId || "" },
         },
       });
     };
@@ -2021,7 +2080,7 @@ function editServiceBindings() {
     )
       .map(
         ([provider, items]) =>
-          `<h3>${serviceNames[provider]}</h3><div class="form-grid">${items.map(([key, label, hint]) => field(label, provider + "." + key, p.services?.[provider]?.binding?.[key] || "", hint)).join("")}${field("계정 메모 (직접 기록)", provider + ".accountLabel", p.services?.[provider]?.binding?.accountLabel || "", "회사 계정 / 개인 계정 등")}</div>`,
+          `<h3>${serviceNames[provider]}</h3><div class="form-grid">${items.map(([key, label, hint]) => field(label, provider + "." + key, p.services?.[provider]?.binding?.[key] || "", hint)).join("")}${`<input type="hidden" name="${provider}.credentialId" value="${esc(p.services?.[provider]?.binding?.credentialId || "")}">`}${field("계정 메모 (직접 기록)", provider + ".accountLabel", p.services?.[provider]?.binding?.accountLabel || "", "회사 계정 / 개인 계정 등")}</div>`,
       )
       .join(
         "",
@@ -2045,11 +2104,12 @@ function editServiceBindings() {
       { serviceBindings: {} },
     );
 }
-function connectService(provider) {
+function connectService(provider, accountId = "") {
   if (data.mode !== "local") {
     toast("서비스 토큰은 이 컴퓨터의 로컬 모드에서 연결하세요.");
     return;
   }
+  const existingAccount = (data.serviceAccountRegistry || []).find(a => a.id === accountId);
   const hint = {
     github:
       "로그인된 gh CLI가 있으면 토큰 없이 계정 확인을 시도할 수 있어요. 토큰을 쓰는 경우 해당 저장소의 메타데이터 읽기 권한이 필요합니다.",
@@ -2060,8 +2120,8 @@ function connectService(provider) {
       "선택한 계정의 Account Settings 읽기 권한이 있는 API 토큰이 필요합니다.",
   }[provider];
   showModal(
-    serviceNames[provider] + " 읽기 토큰 연결",
-    `<form id="service-token-form"><p>${esc(hint)}</p><p class="muted">계정 읽기 응답을 확인한 뒤 이 컴퓨터의 .local에 저장합니다. 저장된 토큰은 다시 표시하지 않습니다.</p><label class="field">읽기 토큰<input name="key" type="password" required autocomplete="off" spellcheck="false" maxlength="4096"></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button primary">검증 후 저장</button></div></form>`,
+    serviceNames[provider] + (accountId ? " 계정 토큰 변경" : " 계정 추가"),
+    `<form id="service-token-form">${field("계정 별칭", "label", existingAccount?.label || "", "개인① / 회사 / 테스트용 등")}<p>${esc(hint)}</p><p class="muted">계정 읽기 응답을 확인한 뒤 이 컴퓨터의 .local에 저장합니다. 저장된 토큰은 다시 표시하지 않습니다.</p><label class="field">읽기 토큰<input name="key" type="password" required autocomplete="off" spellcheck="false" maxlength="4096"></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button primary">검증 후 저장</button></div></form>`,
   );
   $("#service-token-form").onsubmit = async (e) => {
     e.preventDefault();

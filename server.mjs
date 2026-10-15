@@ -941,6 +941,7 @@ export const server = http.createServer(async (req, res) => {
         healthAutoError,
         vercelTokenConfigured: !!process.env.VERCEL_TOKEN,
         serviceCredentials: await serviceAccounts.configured(),
+        serviceAccountRegistry: await serviceAccounts.accounts(),
         analyticsAttempts: s.analyticsAttempts || {},
         analyticsSummaries: Object.entries(s.analytics || {})
           .map(([id, periods]) => ({
@@ -1197,7 +1198,7 @@ export const server = http.createServer(async (req, res) => {
     }
     if (
       url.pathname === "/api/connections/service-accounts" &&
-      req.method === "POST"
+      ["POST", "PUT"].includes(req.method)
     ) {
       if (
         remote ||
@@ -1209,10 +1210,13 @@ export const server = http.createServer(async (req, res) => {
           error: "서비스 인증은 이 컴퓨터의 로컬 모드에서 연결하세요.",
         });
       const b = await body(req, 8192);
-      const result = await serviceAccounts.connect(b.provider, b.key);
+      if (!serviceProviders.includes(b.provider)) throw new Error("서비스를 확인하세요.");
+      const result = req.method === "PUT"
+        ? await serviceAccounts.rename(b.provider, b.id, b.label)
+        : await serviceAccounts.connect(b.provider, b.key, b.label !== undefined ? {label: b.label, id: b.id} : undefined);
       await mutate((s) => {
         for (const records of Object.values(s.serviceAccounts || {}))
-          delete records[b.provider];
+          if (req.method === "POST" && (!b.label || records[b.provider]?.credentialId === result.id || records[b.provider]?.state === "error")) delete records[b.provider];
       });
       cache = null;
       return json(res, 200, result);
@@ -1221,7 +1225,7 @@ export const server = http.createServer(async (req, res) => {
       url.pathname === "/api/connections/service-accounts/supabase/projects" &&
       req.method === "GET"
     )
-      return json(res, 200, { projects: await serviceAccounts.projects() });
+      return json(res, 200, { projects: await serviceAccounts.projects(url.searchParams.get("account") || "") });
     const match = url.pathname.match(
       /^\/api\/projects\/([^/]+)(?:\/(analytics|deployment|health|verification|services))?$/,
     );

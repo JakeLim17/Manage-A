@@ -3690,6 +3690,64 @@ button.impact-endpoint {
 .service-register {
   padding: 0 24px 16px;
 }
+.project-account-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 16px;
+  min-width: 0;
+}
+.project-account-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: 200px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: #8193a2;
+}
+.project-account-chip > b { font-size: 13px; font-weight: 600; }
+.project-account-chip.is-known > b { color: #264652; }
+.project-account-list { padding: 0 24px 16px; max-height: 520px; overflow-y: auto; scrollbar-gutter: stable; }
+.project-account-item {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(0, 2.3fr) 42px;
+  align-items: center;
+  gap: 20px;
+  padding: 15px 0;
+  border-top: 1px solid #e1e9ed;
+}
+.project-account-item .project-name { min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.project-account-item .project-account-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.project-account-item .project-account-chip { max-width: none; }
+.account-overview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 24px 16px;
+}
+.account-overview-toolbar .card-note { margin: 0; padding: 0; max-width: 580px; }
+.account-overview-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #637c90; }
+.account-overview-toolbar select { max-width: 260px; padding: 9px; border: 1px solid #d5e1e8; border-radius: 6px; background: white; color: #193746; }
+.selected-project-accounts { padding: 0 24px 16px; }
+.selected-project-accounts .project-account-chips { gap: 24px; }
+.card > details { margin: 0 24px 20px; }
+.card > details > summary { cursor: pointer; color: #315667; font-weight: 600; padding: 12px 0; }
+.registered-account-list > div { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 0; border-top: 1px solid #e1e9ed; }
+.registered-account-list > div > span { flex: 1; min-width: 160px; overflow-wrap: anywhere; }
+.registered-account-list small { display: block; margin-top: 5px; color: #718798; }
+.map-project .project-account-chips { margin-top: 10px; width: 100%; justify-content: center; }
+.map-project .project-account-chip { font-size: 10px; max-width: 100%; }
+.map-project .project-account-chip > b { font-size: 11px; }
+@media (max-width: 700px) {
+  .project-account-item { grid-template-columns: minmax(0, 1fr) 42px; gap: 12px; }
+  .project-account-item .project-account-chips { grid-column: 1 / -1; grid-row: 2; gap: 12px; }
+  .project-account-list, .account-overview-toolbar { padding-left: 16px; padding-right: 16px; }
+  .account-overview-toolbar select { max-width: 220px; }
+}
 .service-account-row {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1.2fr) 112px;

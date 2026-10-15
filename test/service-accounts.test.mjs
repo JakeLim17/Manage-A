@@ -321,3 +321,74 @@ test("AI connection requests explain provider limitations and never claim automa
   assert.ok(services.includes("example-app"));
   assert.ok(services.includes("/api/projects/"));
 });
+
+test("multiple Vercel accounts match exact resources without crossing an explicit login", async (t) => {
+  const dir = await fixture(t);
+  const keys = ["test-private-alpha", "test-private-bravo"];
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    const key = options.headers.Authorization.slice(7);
+    const suffix = key === keys[0] ? "alpha" : "bravo";
+    calls.push(key);
+    if (url.endsWith("/v2/user")) return response({user: {uid: suffix, email: suffix + "@example.test"}});
+    if (url.includes("/v9/projects/prj_" + suffix)) return response({id: "prj_" + suffix, accountId: "team_" + suffix, name: suffix});
+    if (url.endsWith("/v2/teams/team_" + suffix)) return response({id: "team_" + suffix, name: suffix + " team"});
+    return response({}, 403);
+  };
+  const client = createServiceAccounts({dataDir: dir, env: {}, fetchImpl});
+  const a = await client.connect("vercel", keys[0], {label: "개인①"});
+  const b = await client.connect("vercel", keys[1], {label: "개인②"});
+  assert.notEqual(a.id, b.id);
+  let result = await client.verify("vercel", {projectId: "prj_bravo"});
+  assert.equal(result.state, "connected");
+  assert.equal(result.credentialId, b.id);
+  assert.equal(result.accountName, "bravo team");
+  calls.length = 0;
+  result = await client.verify("vercel", {projectId: "prj_bravo", credentialId: a.id});
+  assert.equal(result.state, "error");
+  assert.ok(calls.every(key => key === keys[0]));
+  await client.rename("vercel", b.id, "회사");
+  const restored = createServiceAccounts({dataDir: dir, env: {}, fetchImpl});
+  const accounts = await restored.accounts();
+  assert.equal(accounts.filter(a => a.provider === "vercel").length, 2);
+  assert.equal(accounts.find(a => a.id === b.id).label, "회사");
+  for (const key of keys) assert.ok(!JSON.stringify(accounts).includes(key));
+  await assert.rejects(restored.rename("github", b.id, "wrong provider"));
+  await assert.rejects(restored.rename("vercel", b.id, keys[1]));
+  assert.equal((await fs.stat(path.join(dir, "service-credentials.json"))).mode & 0o777, 0o600);
+  assert.throws(() => validateServiceBindings({github: {credentialId: "vercel:env"}}));
+});
+
+test("Supabase picker aggregates separate logins without leaking database fields", async (t) => {
+  const dir = await fixture(t);
+  const client = createServiceAccounts({dataDir: dir, env: {}, run: async () => { throw Error("no CLI"); }, fetchImpl: async (url, options) => {
+    const suffix = options.headers.Authorization.endsWith("alpha") ? "alpha" : "bravo";
+    if (url.endsWith("/v1/organizations")) return response([{id: suffix, name: suffix + " org"}]);
+    return response([{ref: suffix.repeat(4), organization_id: suffix, name: suffix, database: {password: "never-expose"}}]);
+  }});
+  const a = await client.connect("supabase", "test-private-alpha", {label: "개인①"});
+  const b = await client.connect("supabase", "test-private-bravo", {label: "개인②"});
+  const projects = await client.projects();
+  assert.equal(projects.length, 2);
+  assert.equal(projects.find(p => p.name === "alpha").credentialId, a.id);
+  assert.equal(projects.find(p => p.name === "bravo").credentialId, b.id);
+  assert.ok(!JSON.stringify(projects).includes("never-expose"));
+  assert.equal((await client.projects(a.id)).length, 1);
+  assert.equal((await client.verify("supabase", {projectRef: "bravo".repeat(4), credentialId: a.id})).state, "error");
+  assert.equal((await client.verify("supabase", {projectRef: "bravo".repeat(4)})).credentialId, b.id);
+});
+
+test("legacy and environment credentials remain selectable after registering another account", async (t) => {
+  const dir = await fixture(t);
+  await fs.writeFile(path.join(dir, "service-credentials.json"), JSON.stringify({github: "legacy-private-key"}));
+  const client = createServiceAccounts({dataDir: dir, env: {GITHUB_TOKEN: "environment-private-key"}, fetchImpl: async (url, options) => {
+    if (url.endsWith("/user")) return response({login: options.headers.Authorization.includes("environment") ? "env-viewer" : "other-viewer"});
+    return response({full_name: "acme/app", owner: {id: 1, login: "acme"}});
+  }});
+  await client.connect("github", "another-private-key", {label: "회사"});
+  const accounts = await client.accounts();
+  assert.ok(accounts.some(a => a.id === "github:legacy"));
+  assert.ok(accounts.some(a => a.id === "github:env"));
+  assert.equal((await client.verify("github", {repository: "acme/app", credentialId: "github:env"})).actor, "env-viewer");
+  assert.equal((await client.verify("github", {repository: "acme/app", credentialId: "github:legacy"})).actor, "other-viewer");
+});
