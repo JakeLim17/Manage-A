@@ -1,5 +1,22 @@
 export const helpTopics = [
   {
+    id: "accounts",
+    category: "연결과 사용량",
+    title: "서비스 계정: 프로젝트 소속과 로그인 계정 구분하기",
+    summary:
+      "GitHub·Vercel·Supabase·Cloudflare의 프로젝트별 소속을 확인합니다.",
+    steps: [
+      "서비스 계정 화면에서 프로젝트를 고릅니다. Git origin, .vercel/project.json, Supabase project-ref, wrangler account_id는 연결 근거로만 표시됩니다.",
+      "연결 ID 편집에서 수동 지정하거나 자동 발견으로 되돌릴 수 있습니다. Supabase 프로젝트 찾기는 접근 가능한 실제 목록을 보여 주며 연결 대상은 직접 선택합니다.",
+      "계정 확인을 눌러 프로젝트와 공식 API 응답을 대조합니다. GitHub·Supabase는 로그인된 공식 CLI도 지원합니다. Vercel·Cloudflare는 읽기 토큰을 연결하세요.",
+      "프로젝트 소속 조직과 조회 계정은 다를 수 있습니다. 이메일이 제공되지 않으면 추정하지 않고 미제공으로 표시합니다. 직접 기록한 계정 메모는 검증된 소속이 아닙니다.",
+      "15분이 지난 확인 결과는 재확인이 필요합니다. Cloudflare 확인은 지정 계정에 대한 접근을 확인하며 Worker·Pages 배포 검증은 포함하지 않습니다.",
+      "AI에게 연동 요청 버튼에서 복사한 안내문을 사용하는 AI에게 전달할 수 있습니다. 토큰과 비밀번호를 대화에 붙이지 않고 로컬 연결 창에서 직접 입력하세요.",
+    ],
+    action: "accounts",
+    actionLabel: "서비스 계정 열기",
+  },
+  {
     id: "start",
     category: "처음 사용",
     title: "처음에는 이 순서로 보세요",

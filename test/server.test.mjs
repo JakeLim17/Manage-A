@@ -40,6 +40,71 @@ test("discovers real project metadata and leaves runtime state unknown", async (
   assert.deepEqual(ps[0].stack, ["react"]);
   assert.equal(ps[0].status, "unknown");
 });
+test("service accounts protect writes, validate bindings and never verify an unbound project", async () => {
+  assert.equal(
+    (
+      await post("/api/projects/demo", {
+        serviceBindings: { github: { repository: "https://evil.test" } },
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await post("/api/projects/demo", {
+        serviceBindings: { github: { accountLabel: "Work account" } },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await post(
+        "/api/projects/demo/services",
+        { provider: "github" },
+        "https://evil.example",
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await post(
+        "/api/connections/service-accounts",
+        { provider: "github", key: "unused-test-value" },
+        "https://evil.example",
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await post("/api/connections/service-accounts", {
+        provider: "other",
+        key: "unused-test-value",
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (await post("/api/projects/demo/services", { provider: "other" })).status,
+    400,
+  );
+  const result = await (
+    await post("/api/projects/demo/services", { provider: "github" })
+  ).json();
+  assert.equal(result.state, "error");
+  const dashboard = await (await fetch(base + "/api/dashboard")).json();
+  const project = dashboard.projects.find((p) => p.id === "demo");
+  assert.equal(project.services.github.binding.accountLabel, "Work account");
+  assert.equal(project.services.github.state, "error");
+  assert.equal(project.services.github.accountName, undefined);
+  assert.equal(typeof dashboard.serviceCredentials.github, "boolean");
+  assert.equal(
+    (await fetch(base + "/.local/service-credentials.json")).status,
+    404,
+  );
+});
 test("validates quotas instead of displaying invalid values", () => {
   for (const remaining of [-1, 101, "", NaN])
     assert.throws(() =>
@@ -344,11 +409,20 @@ test("analytics cache persists successful results and clears on property change"
   }
 });
 
-test('API credential connection rejects invalid keys and cross origin without persisting secrets', async()=>{
- const invalid=await post('/api/connections/api-usage',{provider:'OpenAI',key:'invalid'});
- assert.equal(invalid.status,400);
- const foreign=await post('/api/connections/api-usage',{provider:'Claude',key:'secret-not-to-be-stored'},'https://example.test');
- assert.equal(foreign.status,403);
- await assert.rejects(fs.access(path.join(process.env.DATA_DIR,'api-credentials.json')));
- assert.equal((await fetch(base+'/api-credentials.json')).status,404);
+test("API credential connection rejects invalid keys and cross origin without persisting secrets", async () => {
+  const invalid = await post("/api/connections/api-usage", {
+    provider: "OpenAI",
+    key: "invalid",
+  });
+  assert.equal(invalid.status, 400);
+  const foreign = await post(
+    "/api/connections/api-usage",
+    { provider: "Claude", key: "secret-not-to-be-stored" },
+    "https://example.test",
+  );
+  assert.equal(foreign.status, 403);
+  await assert.rejects(
+    fs.access(path.join(process.env.DATA_DIR, "api-credentials.json")),
+  );
+  assert.equal((await fetch(base + "/api-credentials.json")).status, 404);
 });

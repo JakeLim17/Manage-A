@@ -8,7 +8,7 @@
     "start": "node --env-file-if-exists=.env server.mjs",
     "dev": "node --watch --env-file-if-exists=.env server.mjs",
     "test": "node --test",
-    "check": "node --check server.mjs && node --check lib/integrations.mjs && node --check lib/project-analysis.mjs && node --check lib/health.mjs && node --check lib/provider-usage.mjs && node --check scripts/claude-statusline.mjs && node --check scripts/connect-claude.mjs && node --check public/app.js && node --check public/graph.js && node --check public/insights.js && node --check public/help.js && node --check lib/api-usage.mjs && node --check lib/claude-cli-usage.mjs && node --check lib/google-oauth.mjs"
+    "check": "node --check server.mjs && node --check lib/integrations.mjs && node --check lib/project-analysis.mjs && node --check lib/health.mjs && node --check lib/provider-usage.mjs && node --check scripts/claude-statusline.mjs && node --check scripts/connect-claude.mjs && node --check public/app.js && node --check public/graph.js && node --check public/insights.js && node --check public/help.js && node --check public/connection-prompts.js && node --check lib/api-usage.mjs && node --check lib/claude-cli-usage.mjs && node --check lib/google-oauth.mjs && node --check lib/service-accounts.mjs"
   },
   "engines": {
     "node": ">=22.9"

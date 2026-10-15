@@ -7,6 +7,7 @@ import {
   fresh,
 } from "./insights.js";
 import { helpTopics, searchHelp } from "./help.js";
+import { connectionPrompt } from "./connection-prompts.js";
 let helpQuery = "",
   helpFocus = "";
 const $ = (s) => document.querySelector(s);
@@ -73,6 +74,7 @@ const labels = {
 const nav = [
   ["overview", "home", "개요"],
   ["projects", "folder", "프로젝트"],
+  ["accounts", "settings", "서비스 계정"],
   ["flow", "flow", "시스템 흐름"],
   ["health", "check", "상태 점검"],
   ["impact", "code", "변경 영향"],
@@ -154,6 +156,7 @@ function render() {
   const title = {
     overview: `좋은 하루예요, ${displayName}님!`,
     projects: "프로젝트",
+    accounts: "프로젝트별 서비스 계정",
     flow: "시스템 흐름",
     health: "프로젝트 상태 점검",
     impact: "변경 영향 지도",
@@ -166,6 +169,7 @@ function render() {
   const sub = {
     overview: "프로젝트 시각화·AI 사용량·방문 통계를 내 컴퓨터에서 확인하세요.",
     projects: "로컬에서 발견한 프로젝트와 직접 정리한 정보를 함께 봅니다.",
+    accounts: "저장소·배포·데이터베이스·네트워크의 소속 계정을 확인하세요.",
     flow: "연결선을 따라 기능의 처리 과정을 살펴보세요.",
     health: "운영 사이트와 내 컴퓨터의 개발 서버는 별도로 확인합니다.",
     impact: "파일을 선택하면 이를 참조하는 화면과 API를 찾습니다.",
@@ -176,7 +180,7 @@ function render() {
     help: "처음에는 개요·운영 사이트·AI 사용량부터 보세요. 필요한 내용만 찾아 읽으면 됩니다.",
   }[view];
   $("#app").innerHTML =
-    `<aside class="sidebar"><a class="brand" href="#overview"><img class="manage-logo" src="/logo.svg" alt="">Manage-A</a><div class="workspace"><span class="avatar">${esc(Array.from(displayName)[0] || "M")}</span><div>${esc(displayName)}의 워크스페이스<small>프로젝트 관리</small></div></div><nav>${nav.map(([id, i, l]) => `<button data-nav="${id}" class="nav-item ${view === id ? "active" : ""}" aria-label="${l}" title="${l}">${icon(i)}<span>${l}</span>${id === "projects" ? `<span class="nav-count">${data.projects.length}</span>` : ""}</button>`).join("")}</nav><div class="side-bottom"><span class="live-dot"></span> ${data.mode === "local" ? "로컬 전용" : "인증된 웹 접근"}<p>${data.mode === "local" ? "이 기기에서 안전하게 관리합니다." : "로그인한 사용자만 접근할 수 있습니다."}</p><div class="version">Manage-A <span>v1.4</span></div></div></aside><main><header class="topbar"><div>워크스페이스 <span>/</span> ${nav.find((n) => n[0] === view)[2]}</div><div class="top-actions"><button class="button" data-guide="${view === "help" ? "" : view}">${icon("log")}${view === "help" ? "전체 설명서" : "이 화면 사용법"}</button>${badge(data.mode === "local" ? "로컬 모드" : "인증된 웹", "green")}<button class="button" data-nav="settings">${icon("lock")} 웹 접근 설정</button>${data.mode === "web" ? '<button class="button" id="logout">로그아웃</button>' : ""}</div></header><div class="content"><div class="page-heading"><div><h1>${esc(title)}</h1><p>${sub}</p></div><button class="button" id="refresh">${icon("refresh")} 새로고침</button></div>${view === "overview" ? overview() : view === "projects" ? projectsView() : view === "flow" ? flowView() : view === "health" ? healthView() : view === "impact" ? impactView() : view === "analytics" ? analyticsView() : view === "usage" ? usageView() : view === "activity" ? activityView() : view === "help" ? helpView() : settingsView()}<footer><span id="connection-health">${icon("lock")} 연결 키와 민감한 값은 브라우저에 전송하지 않습니다.</span><span>프로젝트 확인 ${date(data.scannedAt)}</span></footer></div></main>`;
+    `<aside class="sidebar"><a class="brand" href="#overview"><img class="manage-logo" src="/logo.svg" alt="">Manage-A</a><div class="workspace"><span class="avatar">${esc(Array.from(displayName)[0] || "M")}</span><div>${esc(displayName)}의 워크스페이스<small>프로젝트 관리</small></div></div><nav>${nav.map(([id, i, l]) => `<button data-nav="${id}" class="nav-item ${view === id ? "active" : ""}" aria-label="${l}" title="${l}">${icon(i)}<span>${l}</span>${id === "projects" ? `<span class="nav-count">${data.projects.length}</span>` : ""}</button>`).join("")}</nav><div class="side-bottom"><span class="live-dot"></span> ${data.mode === "local" ? "로컬 전용" : "인증된 웹 접근"}<p>${data.mode === "local" ? "이 기기에서 안전하게 관리합니다." : "로그인한 사용자만 접근할 수 있습니다."}</p><div class="version">Manage-A <span>v1.4</span></div></div></aside><main><header class="topbar"><div>워크스페이스 <span>/</span> ${nav.find((n) => n[0] === view)[2]}</div><div class="top-actions"><button class="button" data-guide="${view === "help" ? "" : view}">${icon("log")}${view === "help" ? "전체 설명서" : "이 화면 사용법"}</button>${badge(data.mode === "local" ? "로컬 모드" : "인증된 웹", "green")}<button class="button" data-nav="settings">${icon("lock")} 웹 접근 설정</button>${data.mode === "web" ? '<button class="button" id="logout">로그아웃</button>' : ""}</div></header><div class="content"><div class="page-heading"><div><h1>${esc(title)}</h1><p>${sub}</p></div><button class="button" id="refresh">${icon("refresh")} 새로고침</button></div>${view === "overview" ? overview() : view === "projects" ? projectsView() : view === "accounts" ? accountsView() : view === "flow" ? flowView() : view === "health" ? healthView() : view === "impact" ? impactView() : view === "analytics" ? analyticsView() : view === "usage" ? usageView() : view === "activity" ? activityView() : view === "help" ? helpView() : settingsView()}<footer><span id="connection-health">${icon("lock")} 연결 키와 민감한 값은 브라우저에 전송하지 않습니다.</span><span>프로젝트 확인 ${date(data.scannedAt)}</span></footer></div></main>`;
   bind();
   fitSvgText();
   document.fonts?.ready.then(fitSvgText);
@@ -459,7 +463,7 @@ function flowView() {
     inv = p.inventory || {},
     r = inv.routeDetails?.find((r) => (r.key || r.file) === routeFile);
   return `<div class="section-toolbar flow-toolbar">${selector()}<div class="filter-tabs"><button data-flow-mode="architecture" class="${flowMode === "architecture" ? "active" : ""}">코드 연결 구조</button><button data-flow-mode="custom" class="${flowMode === "custom" ? "active" : ""}">직접 정의한 흐름</button></div><div class="flow-controls"><button class="button" id="pause">${icon(paused ? "play" : "pause")}${paused ? "재생" : "일시정지"}</button><select id="speed" aria-label="재생 속도">${[0.5, 1, 2].map((v) => `<option value="${v}" ${v === speed ? "selected" : ""}>${v}×</option>`).join("")}</select><button class="button" id="edit-flow">${icon("settings")} 구조 편집</button></div></div>
- <div class="project-ribbon"><div><strong>${esc(p.name)}</strong><span>${esc(p.description)}</span></div>${badge(labels[p.status], p.status === "development" ? "amber" : "gray")}<span class="ribbon-stat">${inv.sourceCount || 0}개 소스</span><span class="ribbon-stat">${inv.pageCount || 0}개 페이지</span><span class="ribbon-stat">${inv.routeCount || 0}개 API</span></div>
+ <div class="project-ribbon"><div><strong>${esc(p.name)}</strong><span>${esc(p.description)}</span></div>${badge(labels[p.status], p.status === "development" ? "amber" : "gray")}<button class="button" data-nav="accounts">서비스 계정 보기</button><span class="ribbon-stat">${inv.sourceCount || 0}개 소스</span><span class="ribbon-stat">${inv.pageCount || 0}개 페이지</span><span class="ribbon-stat">${inv.routeCount || 0}개 API</span></div>
  <div class="flow-layout">${card("구조와 처리 경로", `<div class="flow-subtoolbar"><label>기능별 연결 보기<select id="route-select" aria-label="기능별 API 선택"><option value="">프로젝트 전체 구조</option>${(inv.routeDetails || []).map((v) => `<option value="${esc(v.key || v.file)}" ${(v.key || v.file) === routeFile ? "selected" : ""}>${esc(v.methods.join("/") || "API")} ${esc(v.endpoint)}</option>`).join("")}</select></label><div class="graph-legend"><span><i class="solid-line"></i>코드 import</span><span><i class="dashed-line"></i>추정 / 설정 연결</span></div></div><div class="flow-notice">${badge(flowMode === "custom" ? "직접 정의" : "소스 기반 분석", flowMode === "custom" ? "green" : "gray")}<span>${esc(f.caption || "직접 정리한 설명용 처리 순서입니다.")}</span></div>${flowSvg(f)}<div class="steps">${f.nodes.map((v) => `<button data-node="${esc(v.id)}" class="${activeNode === v.id ? "active" : ""}">${icon(v.kind || "flow")}${esc(v.label)}</button>`).join("")}</div><p class="card-note">이동하는 점은 경로 설명용입니다. 실제 요청량·호출 순서를 측정한 화면이 아닙니다.</p>`)}<div>${card(
    "선택한 구성 요소",
    `<div class="inspector node-inspector">${icon(n.kind || "flow")}<h3>${esc(n.label)}</h3><p>${esc(n.detail || "설명을 추가하세요.")}</p>${n.language ? badge(n.language, "green") : ""}<h4>확인 근거</h4><div class="evidence-list">${(n.evidence || ["직접 입력한 단계"]).map((v) => `<code>${esc(v)}</code>`).join("")}</div><h4>다음 연결</h4><div class="next-links">${
@@ -536,7 +540,7 @@ function flowSvg(f) {
 }
 function usageView() {
   const local = data.claudeActivity;
-  return `<div class="section-toolbar"><div class="info-banner compact">${icon("ai")}구독 잔여량과 API 비용을 한눈에 확인하세요.</div><button class="button primary" id="sync-usage">${icon("refresh")} 사용량 새로고침</button></div><div class="usage-grid">${[
+  return `<div class="section-toolbar"><div class="info-banner compact">${icon("ai")}구독 잔여량과 API 비용을 한눈에 확인하세요.</div><button class="button" data-connection-prompt="usage">${icon("ai")} AI에게 연동 요청</button><button class="button primary" id="sync-usage">${icon("refresh")} 사용량 새로고침</button></div><div class="usage-grid">${[
     "Claude",
     "Codex",
     "Cursor",
@@ -756,6 +760,57 @@ function settingsView() {
   return `${profileCard()}${connectionCenter()}${analyticsMatrix()}<div class="settings-grid">${card("실행과 접근", `<div class="settings-body">${badge(data.mode === "local" ? "로컬 전용으로 실행 중" : "인증된 웹 모드", "green")}<h3>기본은 내 컴퓨터에서만</h3><p>현재 로컬 서버는 기본적으로 127.0.0.1에만 열립니다. 계정 정보와 관리 데이터는 이 기기에 보관됩니다.</p><h3>다른 기기에서 보고 싶을 때</h3><p>가장 간단한 방법은 SSH 터널입니다. 원격 모드에는 16자 이상의 비밀번호와 접속 주소 설정이 필요하며 HTTPS 프록시와 함께 사용하세요.</p><code class="code-block">ssh -L 4310:127.0.0.1:4310 사용자@내컴퓨터</code><p class="muted">외부 공개는 자동으로 켜지지 않습니다. 상세 설정은 README를 확인하세요.</p></div>`)}${card("Google 통계 연결", `<div class="settings-body">${badge(data.googleConnected ? (data.googleAuthStatus?.method === "oauth" ? "Google 로그인 완료" : "인증 파일 등록") : "Google 미연결", data.googleConnected ? "green" : "gray")}<ol><li>Google Cloud에서 Analytics Data API, Analytics Admin API, Search Console API를 활성화하세요.</li><li>‘Google로 연결’에서 OAuth 클라이언트 JSON 경로를 지정하고 통계 읽기 권한을 승인하세요.</li><li>방문·검색에서 프로젝트를 고른 뒤 ‘통계 속성 찾기’로 해당 프로젝트의 속성을 선택하세요.</li><li>‘통계 가져오기’를 눌러 실제 수신을 확인하세요. 로그인 완료와 데이터 수신은 별도로 표시됩니다.</li></ol><p class="muted">기존 서비스 계정은 연결 창의 ‘서비스 계정 파일로 연결’에서 설정할 수 있어요. 인증 토큰과 키 내용은 브라우저로 보내지 않습니다.</p><button class="button primary" id="connect-google">${data.googleConnected ? "Google 연결 변경" : "Google로 연결"}</button> <button class="button" data-nav="analytics">방문·검색 열기</button></div>`)}${card("프로젝트 수집", `<div class="settings-body"><h3>자동으로 읽는 정보</h3><p>프로젝트 폴더, package.json, README, Git 브랜치와 최근 커밋, 변경 파일 수를 읽습니다. .env와 비밀 키는 수집하지 않습니다.</p><h3>직접 관리하는 정보</h3><p>운영 상태, 주요 기능, 설명, 연결 구조와 통계 속성 ID는 프로젝트 편집에서 관리하세요.</p><button class="button" id="refresh">${icon("refresh")} 프로젝트 다시 읽기</button></div>`)}${card("비용과 데이터", `<div class="settings-body"><h3>로컬 실행에 호스팅 비용이 들지 않아요</h3><p>별도 패키지 설치 없이 Node.js로 실행합니다. 외부 API와 원격 호스팅의 요금·할당량은 해당 계정의 조건을 따릅니다.</p><h3>로컬 보관</h3><p>직접 입력한 데이터는 .local/settings.json에 저장되며 Git에서 제외됩니다. 백업은 해당 파일을 안전한 위치에 복사하세요.</p><button class="button" id="export">${icon("download")} 관리 정보 JSON 내보내기</button></div>`)}</div>`;
 }
 function bind() {
+  $("#choose-supabase-project")?.addEventListener(
+    "click",
+    chooseSupabaseProject,
+  );
+  $("#edit-service-bindings")?.addEventListener("click", editServiceBindings);
+  document
+    .querySelectorAll("[data-service-connect]")
+    .forEach(
+      (el) => (el.onclick = () => connectService(el.dataset.serviceConnect)),
+    );
+  document
+    .querySelectorAll("[data-connection-prompt]")
+    .forEach(
+      (el) =>
+        (el.onclick = () => showConnectionPrompt(el.dataset.connectionPrompt)),
+    );
+  document.querySelectorAll("[data-account-project]").forEach(
+    (el) =>
+      (el.onclick = () => {
+        selected = el.dataset.accountProject;
+        sessionStorage.setItem("selectedProject", selected);
+        render();
+      }),
+  );
+  document.querySelectorAll("[data-service-sync]").forEach(
+    (el) =>
+      (el.onclick = async () => {
+        const id = selected;
+        el.disabled = true;
+        el.textContent = "확인 중…";
+        try {
+          const result = await api(
+            `/api/projects/${encodeURIComponent(id)}/services`,
+            {
+              method: "POST",
+              body: JSON.stringify({ provider: el.dataset.serviceSync }),
+            },
+          );
+          await load();
+          toast(
+            result.state === "connected"
+              ? "프로젝트 소속 계정을 확인했어요"
+              : result.reason || "연결 조건을 확인하세요",
+          );
+        } catch (error) {
+          toast(error.message);
+          el.disabled = false;
+          el.textContent = "계정 확인";
+        }
+      }),
+  );
   $("#google-assets")?.addEventListener("click", selectGoogleAssets);
   document
     .querySelectorAll("[data-api-connect]")
@@ -1858,4 +1913,179 @@ async function selectGoogleAssets() {
   } catch (e) {
     toast(e.message);
   }
+}
+
+const serviceNames = {
+  github: "GitHub",
+  vercel: "Vercel",
+  supabase: "Supabase",
+  cloudflare: "Cloudflare",
+};
+function serviceStatus(row) {
+  const state = row?.state;
+  return badge(
+    {
+      connected: "계정 조회 확인",
+      stale: "재확인 필요",
+      error: "확인 필요",
+      unverified: "계정 미확인",
+      unlinked: "연결 ID 없음",
+    }[state] || "미확인",
+    state === "connected"
+      ? "green"
+      : state === "error"
+        ? "red"
+        : state === "stale"
+          ? "amber"
+          : "gray",
+  );
+}
+function accountsView() {
+  const p = project();
+  if (!p) return empty("프로젝트가 없어요", "프로젝트 폴더를 확인해 주세요.");
+  return `<div class="section-toolbar">${selector()}<button class="button" id="edit-service-bindings">연결 ID 편집</button><button class="button" id="choose-supabase-project">Supabase 프로젝트 찾기</button><button class="button" data-connection-prompt="services">${icon("ai")} AI에게 연동 요청</button></div>${card(
+    "이 프로젝트의 서비스 계정",
+    `<p class="card-note">프로젝트가 속한 계정·조직과 조회에 사용한 로그인 계정을 구분합니다. 파일 발견이나 직접 기록만으로 확인 완료가 되지 않습니다.</p><div class="service-register">${Object.entries(
+      serviceNames,
+    )
+      .map(([provider, name]) => {
+        const row = p.services?.[provider] || {},
+          b = row.binding || {};
+        return `<article class="service-account-row"><div class="service-provider"><strong>${name}</strong>${serviceStatus(row)}</div><div class="service-account-identity"><span class="muted">프로젝트 소속 계정 / 조직</span><strong>${esc(row.accountName || "아직 확인하지 않았어요")}</strong>${row.accountId ? `<code>${esc(row.accountId)}</code>` : ""}${b.accountLabel ? `<small>직접 기록: ${esc(b.accountLabel)}</small>` : ""}<small>조회 계정: ${esc(row.actor || "이메일·개인 계정 정보 미제공")}</small></div><div class="service-account-resource"><span class="muted">연결된 리소스</span><strong>${esc(row.resourceName || row.target || "연결 ID를 지정하세요")}</strong><small>연결 근거: ${esc(b.source || "미등록")}</small>${row.checkedAt ? `<small>${date(row.checkedAt)} · ${esc(row.source || "조회 시도")}</small>` : ""}${row.reason ? `<p class="connection-error">${esc(row.reason)}</p>` : ""}${row.resourceUrl ? `<a href="${esc(row.resourceUrl)}" target="_blank" rel="noopener noreferrer">서비스 화면 열기</a>` : ""}</div><div class="service-account-actions"><button class="button primary" data-service-sync="${provider}" ${row.target ? "" : "disabled"}>계정 확인</button><button class="button" data-service-connect="${provider}">${data.serviceCredentials?.[provider] ? "토큰 변경" : "토큰 연결"}</button></div></article>`;
+      })
+      .join(
+        "",
+      )}</div><p class="card-note">확인은 버튼을 눌렀을 때 읽기 API로 수행합니다. 15분이 지난 결과는 재확인 대상으로 표시합니다. GitHub와 Supabase는 로그인된 공식 CLI도 사용할 수 있습니다. Cloudflare는 지정 계정의 접근을 확인하며 개별 배포는 확인하지 않습니다.</p>`,
+  )}${card(
+    "프로젝트별 소속 한눈에 보기",
+    `<div class="table-wrap"><table class="service-account-matrix"><thead><tr><th>프로젝트</th>${Object.values(
+      serviceNames,
+    )
+      .map((n) => `<th>${n}</th>`)
+      .join("")}</tr></thead><tbody>${data.projects
+      .map(
+        (item) =>
+          `<tr><td><button class="text-button" data-account-project="${esc(item.id)}">${esc(item.name)}</button></td>${Object.keys(
+            serviceNames,
+          )
+            .map((provider) => {
+              const r = item.services?.[provider] || {};
+              return `<td><strong>${esc(r.accountName || r.binding?.accountLabel || "소속 미확인")}</strong><small>${esc(r.target || "연결 ID 없음")}</small>${serviceStatus(r)}</td>`;
+            })
+            .join("")}</tr>`,
+      )
+      .join("")}</tbody></table></div>`,
+  )}`;
+}
+async function chooseSupabaseProject() {
+  const p = project();
+  if (!p) return;
+  try {
+    const value = await api(
+      "/api/connections/service-accounts/supabase/projects",
+    );
+    showModal(
+      "Supabase 프로젝트 선택",
+      `<form id="supabase-project-form"><p>${esc(p.name)}에 연결할 프로젝트를 직접 선택하세요. 이름이 비슷해도 자동으로 연결하지 않습니다.</p><label class="field">접근 가능한 프로젝트<select name="projectRef" required><option value="">프로젝트 선택</option>${value.projects.map((r) => `<option value="${esc(r.projectRef)}">${esc(r.name)} · ${esc(r.organization)} · ${esc(r.projectRef)}</option>`).join("")}</select></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button primary">선택한 프로젝트 연결</button></div></form>`,
+    );
+    $("#supabase-project-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const ref = new FormData(e.target).get("projectRef");
+      await saveForm(e.target, `/api/projects/${encodeURIComponent(p.id)}`, {
+        serviceBindings: {
+          ...p.serviceBindings,
+          supabase: { projectRef: ref },
+        },
+      });
+    };
+  } catch (error) {
+    toast(error.message);
+  }
+}
+function editServiceBindings() {
+  const p = project();
+  if (!p) return;
+  const fields = {
+    github: [["repository", "저장소 owner/repository", "owner/repository"]],
+    vercel: [
+      ["projectId", "프로젝트 ID", "prj_…"],
+      ["orgId", "팀 / 계정 ID (선택)", "team_…"],
+    ],
+    supabase: [["projectRef", "연결된 프로젝트 ref", "abcdefghijklmnopqrst"]],
+    cloudflare: [["accountId", "계정 ID", "32자리 계정 ID"]],
+  };
+  showModal(
+    "프로젝트별 서비스 연결 ID",
+    `<form id="service-bindings-form"><p>${esc(p.name)}에 사용할 연결 정보를 지정하세요. 계정 메모는 직접 기록이며 실제 소속 확인과 구분합니다.</p>${Object.entries(
+      fields,
+    )
+      .map(
+        ([provider, items]) =>
+          `<h3>${serviceNames[provider]}</h3><div class="form-grid">${items.map(([key, label, hint]) => field(label, provider + "." + key, p.services?.[provider]?.binding?.[key] || "", hint)).join("")}${field("계정 메모 (직접 기록)", provider + ".accountLabel", p.services?.[provider]?.binding?.accountLabel || "", "회사 계정 / 개인 계정 등")}</div>`,
+      )
+      .join(
+        "",
+      )}<p class="form-error" role="alert"></p><div class="modal-actions"><button type="button" class="button" id="reset-service-bindings">자동 발견으로 되돌리기</button><button class="button primary">연결 ID 저장</button></div></form>`,
+  );
+  $("#service-bindings-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const serviceBindings = {};
+    for (const [name, value] of new FormData(e.target)) {
+      const [provider, key] = name.split(".");
+      (serviceBindings[provider] ||= {})[key] = value;
+    }
+    await saveForm(e.target, `/api/projects/${encodeURIComponent(p.id)}`, {
+      serviceBindings,
+    });
+  };
+  $("#reset-service-bindings").onclick = () =>
+    saveForm(
+      $("#service-bindings-form"),
+      `/api/projects/${encodeURIComponent(p.id)}`,
+      { serviceBindings: {} },
+    );
+}
+function connectService(provider) {
+  if (data.mode !== "local") {
+    toast("서비스 토큰은 이 컴퓨터의 로컬 모드에서 연결하세요.");
+    return;
+  }
+  const hint = {
+    github:
+      "로그인된 gh CLI가 있으면 토큰 없이 계정 확인을 시도할 수 있어요. 토큰을 쓰는 경우 해당 저장소의 메타데이터 읽기 권한이 필요합니다.",
+    vercel: "조회할 프로젝트와 팀에 접근할 수 있는 Vercel 토큰이 필요합니다.",
+    supabase:
+      "로그인된 Supabase CLI가 있으면 토큰 없이 확인할 수 있어요. 토큰을 쓰는 경우 프로젝트·조직 읽기 권한이 있는 Management API 토큰이 필요합니다. DB용 anon / service_role 키와 다릅니다.",
+    cloudflare:
+      "선택한 계정의 Account Settings 읽기 권한이 있는 API 토큰이 필요합니다.",
+  }[provider];
+  showModal(
+    serviceNames[provider] + " 읽기 토큰 연결",
+    `<form id="service-token-form"><p>${esc(hint)}</p><p class="muted">계정 읽기 응답을 확인한 뒤 이 컴퓨터의 .local에 저장합니다. 저장된 토큰은 다시 표시하지 않습니다.</p><label class="field">읽기 토큰<input name="key" type="password" required autocomplete="off" spellcheck="false" maxlength="4096"></label><p class="form-error" role="alert"></p><div class="modal-actions"><button class="button primary">검증 후 저장</button></div></form>`,
+  );
+  $("#service-token-form").onsubmit = async (e) => {
+    e.preventDefault();
+    await saveForm(e.target, "/api/connections/service-accounts", {
+      provider,
+      key: new FormData(e.target).get("key"),
+    });
+  };
+}
+function showConnectionPrompt(kind) {
+  const prompt = connectionPrompt(kind, project()?.name || "");
+  showModal(
+    "AI에게 연동 요청",
+    `<p>내용을 복사해서 사용하는 AI에게 전달하세요. 실제 로그인과 권한 승인이 필요한 단계는 사용자가 완료해야 합니다.</p><textarea id="connection-prompt-text" class="connection-prompt-text" aria-label="AI 연동 요청문" rows="16">${esc(prompt)}</textarea><div class="modal-actions"><button class="button primary" id="copy-connection-prompt">요청문 복사</button></div><p id="prompt-copy-status" role="status"></p>`,
+  );
+  $("#copy-connection-prompt").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText($("#connection-prompt-text").value);
+      $("#prompt-copy-status").textContent =
+        "복사했어요. 사용하는 AI의 대화창에 붙여넣으세요.";
+    } catch {
+      $("#connection-prompt-text").select();
+      $("#prompt-copy-status").textContent =
+        "요청문을 선택했어요. 복사 단축키를 눌러 주세요.";
+    }
+  };
 }

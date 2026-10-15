@@ -75,6 +75,18 @@ On macOS, you can also double-click `Start Dashboard.command`. This launcher use
 
 Project visualization and management work without analytics credentials. `127.0.0.1` refers to the computer opening the address, so each user runs their own instance.
 
+## Project service accounts and AI setup prompts
+
+Open **Service accounts (`서비스 계정`)**, choose a project, review its discovered IDs, and select **Check account (`계정 확인`)**. Targets are discovered from Git origin, Vercel project settings, Supabase project-ref files, and root Wrangler account configuration. Edit IDs explicitly or restore automatic discovery. Project `.env` secrets are not used for discovery.
+
+Authenticated official GitHub and Supabase CLIs can be reused. Vercel and Cloudflare require read tokens. Register tokens through **Connect token (`토큰 연결`)** in local mode. The Supabase picker lists accessible projects for you to choose; similar names are never automatically matched.
+
+The screen separates resource ownership from the login used to query it. Supabase shows the owning organization, without guessing a personal email. Cloudflare verifies configured account access, not a specific Worker or Pages deployment. Failed reads and mismatched IDs are not marked connected. Successful snapshots older than 15 minutes are marked for rechecking.
+
+**Ask AI to connect (`AI에게 연동 요청`)** on the usage and service-account screens generates a copyable setup request. Copying does not send a message or run a connection. Never put tokens in AI chats or commits.
+
+Tokens entered locally are stored in Git-ignored `.local/service-credentials.json`. Optional token environment variables are documented in `.env.example`; locally saved tokens take precedence. Manual account labels are notes, not proof of a verified connection.
+
 ## Integration requirements
 
 - **Codex:** a locally installed, authenticated Codex CLI. The dashboard reads account rate limits without sending model prompts.

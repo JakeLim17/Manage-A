@@ -1,4 +1,11 @@
 import http from "node:http";
+import {
+  createServiceAccounts,
+  detectServiceBindings,
+  validateServiceBindings,
+  serviceRows,
+  serviceProviders,
+} from "./lib/service-accounts.mjs";
 import { createGoogleOAuth } from "./lib/google-oauth.mjs";
 import net from "node:net";
 import fs from "node:fs/promises";
@@ -38,6 +45,7 @@ if (remote && (password.length < 16 || !process.env.PUBLIC_ORIGIN))
   throw new Error(
     "Remote mode requires DASHBOARD_PASSWORD (16+ characters) and PUBLIC_ORIGIN.",
   );
+const serviceAccounts = createServiceAccounts({ dataDir });
 const sessions = new Map(),
   attempts = new Map();
 let cache = null,
@@ -256,6 +264,10 @@ export async function scanProjects() {
           );
           if (v.projectId) vercel = { projectId: v.projectId, orgId: v.orgId };
         } catch {}
+        const bindings = await detectServiceBindings(
+          dir,
+          custom.serviceBindings || {},
+        );
         const detectedPorts = inventory.scriptCommands
           .flatMap((v) =>
             [...v.command.matchAll(/(?:--port(?:=|\s)|-p\s)(\d{2,5})/g)].map(
@@ -319,6 +331,8 @@ export async function scanProjects() {
         return {
           inventory,
           vercel,
+          serviceBindings: custom.serviceBindings || {},
+          services: serviceRows(bindings, store.serviceAccounts?.[d.name]),
           deployment: deploymentSnapshots[d.name] || null,
           localUrls,
           localPorts,
@@ -468,6 +482,8 @@ export function validateProject(body) {
     }
     out.flow = body.flow;
   }
+  if ("serviceBindings" in body)
+    out.serviceBindings = validateServiceBindings(body.serviceBindings);
   return out;
 }
 export function validateUsage(b) {
@@ -924,6 +940,7 @@ export const server = http.createServer(async (req, res) => {
         healthAutoEnabled: process.env.DISABLE_BACKGROUND_SYNC !== "1",
         healthAutoError,
         vercelTokenConfigured: !!process.env.VERCEL_TOKEN,
+        serviceCredentials: await serviceAccounts.configured(),
         analyticsAttempts: s.analyticsAttempts || {},
         analyticsSummaries: Object.entries(s.analytics || {})
           .map(([id, periods]) => ({
@@ -1178,8 +1195,35 @@ export const server = http.createServer(async (req, res) => {
       });
       return json(res, 200, { ok: true });
     }
+    if (
+      url.pathname === "/api/connections/service-accounts" &&
+      req.method === "POST"
+    ) {
+      if (
+        remote ||
+        !["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(
+          req.socket.remoteAddress,
+        )
+      )
+        return json(res, 403, {
+          error: "서비스 인증은 이 컴퓨터의 로컬 모드에서 연결하세요.",
+        });
+      const b = await body(req, 8192);
+      const result = await serviceAccounts.connect(b.provider, b.key);
+      await mutate((s) => {
+        for (const records of Object.values(s.serviceAccounts || {}))
+          delete records[b.provider];
+      });
+      cache = null;
+      return json(res, 200, result);
+    }
+    if (
+      url.pathname === "/api/connections/service-accounts/supabase/projects" &&
+      req.method === "GET"
+    )
+      return json(res, 200, { projects: await serviceAccounts.projects() });
     const match = url.pathname.match(
-      /^\/api\/projects\/([^/]+)(?:\/(analytics|deployment|health|verification))?$/,
+      /^\/api\/projects\/([^/]+)(?:\/(analytics|deployment|health|verification|services))?$/,
     );
     if (match) {
       const id = decodeURIComponent(match[1]);
@@ -1193,6 +1237,37 @@ export const server = http.createServer(async (req, res) => {
       }
       const p = cache.find((p) => p.id === id);
       if (!p) return json(res, 404, { error: "프로젝트가 없어요" });
+      if (match[2] === "services" && req.method === "POST") {
+        const b = await body(req);
+        if (!serviceProviders.includes(b.provider))
+          throw new Error("서비스를 확인하세요.");
+        const previous = (await readStore()).serviceAccounts?.[id]?.[
+          b.provider
+        ];
+        if (
+          previous &&
+          Date.now() - Date.parse(previous.checkedAt) < 10000 &&
+          previous.bindingKey === JSON.stringify(p.services[b.provider].binding)
+        )
+          return json(res, 200, p.services[b.provider]);
+        const result = await serviceAccounts.verify(
+          b.provider,
+          p.services[b.provider].binding,
+        );
+        await mutate((s) => {
+          s.serviceAccounts ||= {};
+          if (!Object.hasOwn(s.serviceAccounts, id))
+            Object.defineProperty(s.serviceAccounts, id, {
+              value: {},
+              writable: true,
+              configurable: true,
+              enumerable: true,
+            });
+          s.serviceAccounts[id][b.provider] = result;
+        });
+        cache = null;
+        return json(res, 200, result);
+      }
       if (match[2] === "health" && req.method === "POST") {
         const previous = (await readStore()).health?.[id]?.http;
         if (previous && Date.now() - Date.parse(previous.checkedAt) < 5000)
@@ -1310,6 +1385,7 @@ export const server = http.createServer(async (req, res) => {
       "/graph.js": "graph.js",
       "/insights.js": "insights.js",
       "/help.js": "help.js",
+      "/connection-prompts.js": "connection-prompts.js",
       "/logo.svg": "logo.svg",
       "/styles.css": "styles.css",
     };
