@@ -1943,7 +1943,7 @@ function serviceStatus(row) {
   const state = row?.state;
   return badge(
     {
-      connected: "계정 조회 확인",
+      connected: row?.source?.includes("웹 화면") ? "웹에서 확인" : "계정 조회 확인",
       stale: "재확인 필요",
       error: "확인 필요",
       unverified: "계정 미확인",
@@ -1964,7 +1964,7 @@ function registeredAccounts(provider) {
 function accountLabel(row, provider) {
   const account = registeredAccounts(provider).find(a => a.id === (row?.credentialId || row?.binding?.credentialId));
   const verified = ["connected", "stale"].includes(row?.state);
-  return verified ? (account?.kind === "token" ? account.label : row.accountName) || "소속 미확인"
+  return verified ? (account?.kind === "token" ? account.label : provider === "vercel" && row.actor ? row.actor : row.accountName) || "소속 미확인"
     : account?.label || row?.binding?.accountLabel || (row?.target ? "미확인" : "연결 없음");
 }
 function accountChips(p) {
@@ -1976,7 +1976,7 @@ function accountChips(p) {
 function accountOverview() {
   const owners = new Map();
   for (const p of data.projects) for (const [provider, row] of Object.entries(p.services || {})) {
-    if (row.accountId && row.accountName) owners.set(provider + ":" + row.accountId, serviceNames[provider] + " · " + row.accountName);
+    if (row.accountId && row.accountName) owners.set(provider + ":" + row.accountId, serviceNames[provider] + " · " + (provider === "vercel" && row.actor ? row.actor : row.accountName));
   }
   const registrations = data.serviceAccountRegistry || [];
   const options = [...registrations.map(a => ["credential:" + a.id, serviceNames[a.provider] + " · " + a.label]), ...Array.from(owners, ([id, label]) => ["owner:" + id, label])];
@@ -2113,7 +2113,7 @@ function connectService(provider, accountId = "") {
   const hint = {
     github:
       "로그인된 gh CLI가 있으면 토큰 없이 계정 확인을 시도할 수 있어요. 토큰을 쓰는 경우 해당 저장소의 메타데이터 읽기 권한이 필요합니다.",
-    vercel: "조회할 프로젝트와 팀에 접근할 수 있는 Vercel 토큰이 필요합니다.",
+    vercel: "로그인된 Vercel CLI는 자동 감지합니다. 다른 계정을 추가하려면 해당 프로젝트·팀에 접근할 수 있는 읽기 토큰을 등록하세요.",
     supabase:
       "로그인된 Supabase CLI가 있으면 토큰 없이 확인할 수 있어요. 토큰을 쓰는 경우 프로젝트·조직 읽기 권한이 있는 Management API 토큰이 필요합니다. DB용 anon / service_role 키와 다릅니다.",
     cloudflare:

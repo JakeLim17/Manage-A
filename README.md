@@ -129,7 +129,7 @@ npm start
 
 서비스 계정 화면에서 프로젝트를 선택하고 연결 ID를 검토한 뒤 **계정 확인**을 누르세요. Git origin, Vercel 프로젝트 설정, Supabase 연결 파일, Wrangler 계정 ID에서 대상을 발견합니다. **연결 ID 편집**으로 직접 지정하거나 자동 발견으로 되돌릴 수 있습니다.
 
-GitHub와 Supabase는 로그인된 공식 CLI를 사용할 수 있습니다. Vercel과 Cloudflare는 **토큰 연결**에서 읽기 권한이 있는 토큰을 등록하세요. Supabase의 **프로젝트 찾기**는 접근 가능한 실제 목록을 보여주며 직접 선택해야 합니다. 이름으로 자동 매칭하지 않습니다.
+GitHub와 Supabase는 로그인된 공식 CLI를 사용할 수 있습니다. Vercel은 macOS의 공식 CLI 로그인 파일을 자동 감지해 토큰을 복사하지 않고 공식 읽기 API를 조회합니다. CLI 로그인이 없거나 다른 계정이라면 **토큰 연결**로 추가하고, Cloudflare도 읽기 토큰을 등록하세요. Supabase의 **프로젝트 찾기**는 접근 가능한 실제 목록을 보여주며 직접 선택해야 합니다. 이름으로 자동 매칭하지 않습니다.
 
 소유 계정·조직과 조회에 사용한 로그인 계정은 구분합니다. Supabase는 소속 조직을 표시하며 개인 이메일을 추정하지 않습니다. Cloudflare는 계정 접근만 확인하며 특정 Worker·Pages 배포를 확인하지 않습니다. 실패·ID 불일치는 연결 완료로 표시하지 않고, 성공 결과도 15분 뒤에는 재확인이 필요하다고 표시합니다.
 
@@ -245,3 +245,5 @@ Team/Enterprise 계정은 Pro·Max 전용 상태줄 `rate_limits`를 기다리�
 Google 승인 화면에는 OAuth 클라이언트의 기존 앱 이름이 표시됩니다. 앱과 개발자를 확인하고 Analytics·Search Console 읽기 권한만 승인합니다. 미검증 앱 경고는 사용자에게 판단과 진행을 맡깁니다. 승인 후 **통계 속성 찾기**로 계정의 GA4 속성과 검증된 검색 사이트를 선택합니다. Google Analytics Data API, Admin API 및 Search Console API가 해당 OAuth 클라이언트 프로젝트에서 활성화되어야 합니다.
 
 인증 정보는 `.local/google-oauth.json`에 0600 권한으로 보관하며 브라우저로 반환하지 않습니다. PKCE와 단일 사용 state로 로컬 콜백을 검증하고, OAuth 토큰 갱신은 서버에서 수행합니다. Google 로그인·속성 등록과 실제 통계 수신은 각각 구분합니다. 다른 계정으로 연결할 경우 기존 프로젝트의 속성 접근 권한을 다시 확인해야 합니다.
+
+프로젝트를 여러 디스크에 나눠 보관한다면 기본 `PROJECT_ROOT` 외에 `PROJECT_ROOTS='["/another/disk/projects"]'`로 추가 경로를 지정할 수 있습니다. 이름이 겹치면 기본 경로가 우선합니다.

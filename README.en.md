@@ -81,7 +81,7 @@ The overview shows GitHub, Vercel, and database accounts beside each project, wi
 
 Open **Service accounts (`서비스 계정`)**, choose a project, review its discovered IDs, and select **Check account (`계정 확인`)**. Targets are discovered from Git origin, Vercel project settings, Supabase project-ref files, and root Wrangler account configuration. Edit IDs explicitly or restore automatic discovery. Project `.env` secrets are not used for discovery.
 
-Authenticated official GitHub and Supabase CLIs can be reused. Vercel and Cloudflare require read tokens. Register tokens through **Connect token (`토큰 연결`)** in local mode. The Supabase picker lists accessible projects for you to choose; similar names are never automatically matched.
+Authenticated official GitHub and Supabase CLIs can be reused. On macOS, an existing official Vercel CLI login is detected automatically without copying its token. Additional Vercel accounts and Cloudflare require read tokens. Register tokens through **Connect token (`토큰 연결`)** in local mode. The Supabase picker lists accessible projects for you to choose; similar names are never automatically matched.
 
 The screen separates resource ownership from the login used to query it. Supabase shows the owning organization, without guessing a personal email. Cloudflare verifies configured account access, not a specific Worker or Pages deployment. Failed reads and mismatched IDs are not marked connected. Successful snapshots older than 15 minutes are marked for rechecking.
 
@@ -130,3 +130,5 @@ Tests use temporary project and data folders and ports 4319/4320. They do not mo
 ## License
 
 A software license has not yet been designated. Permission for reuse and redistribution will be documented when a license is selected.
+
+Use `PROJECT_ROOTS='["/another/disk/projects"]'` to scan additional disks. Duplicate names prefer `PROJECT_ROOT`. `VERCEL_CLI_AUTH_PATH` optionally overrides the official CLI auth path; expired sessions require signing in again.

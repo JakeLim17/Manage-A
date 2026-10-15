@@ -37,6 +37,7 @@ import { readAnthropicApiUsage, readOpenAiApiUsage } from "./lib/api-usage.mjs";
 const exec = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(process.env.PROJECT_ROOT || path.join(here, ".."));
+const roots = [...new Set([root, ...(process.env.PROJECT_ROOTS ? JSON.parse(process.env.PROJECT_ROOTS) : [])].map(p => path.resolve(p)))];
 const dataDir = path.resolve(process.env.DATA_DIR || path.join(here, ".local"));
 const host = process.env.HOST || "127.0.0.1";
 const remote = !["127.0.0.1", "localhost", "::1"].includes(host);
@@ -140,7 +141,7 @@ async function runtimePort(port, dir) {
             })
           ).stdout;
           const cwd = cwdOutput.match(/^n(.+)$/m)?.[1],
-            relative = cwd ? path.relative(root, cwd) : "";
+            relative = cwd ? roots.map(base => path.relative(base, cwd)).find(p => p && !p.startsWith("..") && !path.isAbsolute(p)) || "" : "";
           const ownerProject =
             relative && !relative.startsWith("..") && !path.isAbsolute(relative)
               ? relative.split(path.sep)[0]
@@ -169,17 +170,18 @@ export async function scanProjects() {
       await fs.readFile(path.join(dataDir, "deployments.json"), "utf8"),
     );
   } catch {}
-  const dirs = await fs.readdir(root, { withFileTypes: true });
+  const dirs = (await Promise.all(roots.map(async base => (await fs.readdir(base, {withFileTypes: true})).map(d => ({name: d.name, directory: d.isDirectory(), dir: path.join(base, d.name)}))))).flat();
+  const seen = new Set();
   const projects = await Promise.all(
     dirs
       .filter(
         (d) =>
-          d.isDirectory() &&
+          d.directory && !seen.has(d.name) && (seen.add(d.name), true) &&
           !d.name.startsWith(".") &&
           !["node_modules", "backups", "wts", "_automation"].includes(d.name),
       )
       .map(async (d) => {
-        const dir = path.join(root, d.name);
+        const dir = d.dir;
         let pkg = {};
         try {
           pkg = JSON.parse(await safeRead(path.join(dir, "package.json")));

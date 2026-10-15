@@ -392,3 +392,28 @@ test("legacy and environment credentials remain selectable after registering ano
   assert.equal((await client.verify("github", {repository: "acme/app", credentialId: "github:env"})).actor, "env-viewer");
   assert.equal((await client.verify("github", {repository: "acme/app", credentialId: "github:legacy"})).actor, "other-viewer");
 });
+
+test("Vercel CLI auth is read in place, refreshed on each check, and never returned or copied", async (t) => {
+  const dir = await fixture(t), auth = path.join(dir, "cli-auth.json");
+  await fs.writeFile(auth, JSON.stringify({token: "test-cli-token-alpha", refreshToken: "never-return"}));
+  let expected = "test-cli-token-alpha";
+  const client = createServiceAccounts({dataDir: dir, env: {VERCEL_CLI_AUTH_PATH: auth}, fetchImpl: async (url, options) => {
+    assert.equal(options.headers.Authorization, "Bearer " + expected);
+    if (url.endsWith("/v2/user")) return response({user: {id: "personal", email: "cli@example.test"}});
+    return response({id: "prj_demo", accountId: "personal", name: "demo"});
+  }});
+  const accounts = await client.accounts();
+  assert.ok(accounts.some(a => a.id === "vercel:cli"));
+  assert.ok(!JSON.stringify(accounts).includes(expected));
+  const binding = {projectId: "prj_demo", credentialId: "vercel:cli"};
+  const first = await client.verify("vercel", binding);
+  assert.equal(first.state, "connected");
+  assert.equal(first.actor, "cli@example.test");
+  assert.ok(!JSON.stringify(first).includes(expected));
+  expected = "test-cli-token-bravo";
+  await fs.writeFile(auth, JSON.stringify({token: expected}));
+  assert.equal((await client.verify("vercel", binding)).state, "connected");
+  await assert.rejects(fs.stat(path.join(dir, "service-credentials.json")), {code: "ENOENT"});
+  await fs.unlink(auth);
+  assert.equal((await client.verify("vercel", binding)).state, "error");
+});

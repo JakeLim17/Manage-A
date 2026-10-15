@@ -7,6 +7,9 @@ import path from "node:path";
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), "chronocode-test-"));
 process.env.PROJECT_ROOT = path.join(temp, "projects");
 process.env.DATA_DIR = path.join(temp, "data");
+const additional = path.join(temp, "additional");
+await fs.mkdir(additional);
+process.env.PROJECT_ROOTS = JSON.stringify([additional]);
 process.env.PORT = "4319";
 await fs.mkdir(path.join(process.env.PROJECT_ROOT, "demo"), {
   recursive: true,
@@ -429,4 +432,20 @@ test("API credential connection rejects invalid keys and cross origin without pe
     fs.access(path.join(process.env.DATA_DIR, "api-credentials.json")),
   );
   assert.equal((await fetch(base + "/api-credentials.json")).status, 404);
+});
+
+test("additional project roots are scanned and duplicate names prefer primary root", async () => {
+  await fs.mkdir(path.join(additional, "demo"));
+  await fs.mkdir(path.join(additional, "other-disk"));
+  await fs.writeFile(path.join(additional, "demo", "package.json"), JSON.stringify({description: "Wrong duplicate"}));
+  await fs.writeFile(path.join(additional, "other-disk", "package.json"), JSON.stringify({description: "Other disk project"}));
+  try {
+    const projects = await scanProjects();
+    assert.equal(projects.filter(p => p.id === "demo").length, 1);
+    assert.equal(projects.find(p => p.id === "demo").description, "Test project");
+    assert.equal(projects.find(p => p.id === "other-disk").description, "Other disk project");
+  } finally {
+    await fs.rm(path.join(additional, "demo"), {recursive: true, force: true});
+    await fs.rm(path.join(additional, "other-disk"), {recursive: true, force: true});
+  }
 });
