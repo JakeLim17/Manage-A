@@ -131,6 +131,6 @@ Tests use temporary project and data folders and ports 4319/4320. They do not mo
 
 ## License
 
-A software license has not yet been designated. Permission for reuse and redistribution will be documented when a license is selected.
+Manage-A is available under the [MIT License](LICENSE). Use, modify, redistribute, and use commercially while retaining the copyright and license notice. The software is provided without warranty.
 
 Use `PROJECT_ROOTS='["/another/disk/projects"]'` to scan additional disks. Duplicate names prefer `PROJECT_ROOT`. `VERCEL_CLI_AUTH_PATH` optionally overrides the official CLI auth path; expired sessions require signing in again.
