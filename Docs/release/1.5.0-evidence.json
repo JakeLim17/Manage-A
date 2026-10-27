@@ -33,5 +33,14 @@
     "public/styles.css": "c064143840dd8ba614d20578189e300db6bcd39ae3fac4809699a6891df6da8c",
     "website/index.html": "c87fdc3e9f1ab83bcd6eaaf43a46067e899d12619fc7c6f6b869b33daad71269",
     "website/en/index.html": "0ec3e8ebc5e5958c0efe2409efe1e9abc863809159b1a2a19a10a5f8732942bd"
+  },
+  "source_commit": "027ca2e810a618fc4e00c3eec7b4b31665806437",
+  "pages_run": "40570566278",
+  "pages_status": "success",
+  "live_checks": {
+    "public_ko": "200, byte-identical",
+    "public_en": "200, byte-identical",
+    "local_i18n": "200, byte-identical",
+    "local_dictionary": "200, byte-identical"
   }
 }
