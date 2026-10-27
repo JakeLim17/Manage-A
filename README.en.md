@@ -8,7 +8,7 @@
 
 Manage-A brings project structure, animated flow diagrams, health checks, AI tool usage, and website analytics into one local dashboard. It runs on `127.0.0.1` by default and does not upload the project source files it scans. Connect your own project folders and accounts.
 
-The application interface is currently in Korean. This document provides English setup and feature guidance.
+The application interface, service map explanations, and user guide support both English and Korean.
 
 ## Display language
 

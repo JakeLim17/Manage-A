@@ -2,7 +2,7 @@ name: 소개 페이지 배포
 on:
   push:
     branches: [main]
-    paths: ['website/**', '.github/workflows/pages.yml']
+    paths: ['website/**', 'scripts/check-public-seo.mjs', 'test/seo.test.mjs', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +19,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 공개 SEO 회귀 검사
+        run: node --test test/seo.test.mjs
+      - name: 배포 파일 검색 정보 검사
+        run: npm run check:seo
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
