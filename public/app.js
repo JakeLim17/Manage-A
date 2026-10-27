@@ -161,7 +161,7 @@ function render() {
   document.title = getLocale() === "en" ? "Manage-A — Local project dashboard" : "Manage-A — 로컬 프로젝트 관리 대시보드";
   const displayName = data.profile?.displayName || translateText("사용자");
   const title = {
-    overview: getLocale() === "en" ? `Have a good day, ${displayName}!` : localize`좋은 하루예요, ${displayName}님!`,
+    overview: getLocale() === "en" ? `Welcome, ${displayName}!` : localize`반가워요, ${displayName}님!`,
     projects: translateText("프로젝트"),
     accounts: translateText("프로젝트별 서비스 계정"),
     flow: translateText("시스템 흐름"),

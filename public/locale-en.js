@@ -22,7 +22,7 @@ export const english = {
   "요청에 실패했어요": "The request failed",
   "프로젝트 선택": "Select project",
   "사용자": "User",
-  "좋은 하루예요,": "Have a good day,",
+  "반가워요,": "Welcome,",
   "님!": "!",
   "프로젝트별 서비스 계정": "Service accounts by project",
   "프로젝트 상태 점검": "Project health checks",
