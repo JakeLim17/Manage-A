@@ -3840,3 +3840,5 @@ button.impact-endpoint {
 
 .plain-explanation { margin: 20px 0; padding: 16px; border-left: 3px solid var(--teal); background: #edf7f6; border-radius: 0 8px 8px 0; overflow-wrap: anywhere; }
 .plain-explanation p { margin: 8px 0 0; line-height: 1.75; }
+
+.language-picker{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-shrink:0}.language-picker select{min-width:105px;width:auto;padding:9px 28px 9px 10px}.top-actions{flex-wrap:wrap}.plain-explanation{line-height:1.75}@media(max-width:640px){.topbar{align-items:flex-start;flex-direction:column;gap:12px}.top-actions{gap:8px}.language-picker{max-width:100%}}

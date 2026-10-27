@@ -10,6 +10,12 @@ Manage-A brings project structure, animated flow diagrams, health checks, AI too
 
 The application interface is currently in Korean. This document provides English setup and feature guidance.
 
+## Display language
+
+Choose **English** or **한국어** from the top bar or Settings → Display language. Menus, service map explanations, settings, the user guide, and AI connection prompts change together. The choice is saved in this browser. First use follows the browser language (Korean for Korean browsers, English otherwise).
+
+Switching reloads the same project and screen. Unsaved edits require confirmation before they are discarded. Project names, descriptions, notes, manually entered account aliases, and Git history stay in their original language. Unrecognized provider errors include English guidance and the original diagnostic. Translation uses no external API.
+
 ## Features
 
 - **Project visualization:** discover local projects, languages, dependencies, pages, API routes, and Git activity. Explore animated diagrams and file references.

@@ -449,3 +449,7 @@ test("additional project roots are scanned and duplicate names prefer primary ro
     await fs.rm(path.join(additional, "other-disk"), {recursive: true, force: true});
   }
 });
+
+test("브라우저가 번역 모듈과 사전을 JavaScript로 읽을 수 있다",async()=>{
+ for(const file of ['i18n.js','locale-en.js']){const r=await fetch(base+'/'+file);assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/javascript/);assert.ok((await r.text()).includes('export'));}
+});

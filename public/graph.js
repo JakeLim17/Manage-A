@@ -1,3 +1,4 @@
+import { t as translateText, ui as localize } from "./i18n.js";
 export function buildArchitecture(project, routeFile = "") {
   const inv = project.inventory || {},
     route = inv.routeDetails?.find((r) => (r.key || r.file) === routeFile);
@@ -25,8 +26,8 @@ export function buildArchitecture(project, routeFile = "") {
   if (ui && !route) {
     add(
       "screen",
-      native ? "iPhone / Watch 화면" : "웹 화면",
-      native ? "Swift 소스에서 발견" : `${inv.pageCount || 0}개 화면 파일`,
+      native ? translateText("iPhone / Watch 화면") : translateText("웹 화면"),
+      native ? translateText("Swift 소스에서 발견") : localize`${inv.pageCount || 0}개 화면 파일`,
       "screen",
       (inv.pages || []).slice(0, 4),
       35,
@@ -41,12 +42,12 @@ export function buildArchitecture(project, routeFile = "") {
   if (backend) {
     add(
       "api",
-      route ? route.endpoint : "API · 처리 로직",
+      route ? route.endpoint : translateText("API · 처리 로직"),
       route
-        ? `${route.methods.join(" / ") || "메서드 확인 필요"}`
-        : `${inv.routeCount || 0}개 API 파일`,
+        ? localize`${route.methods.join(" / ") || translateText("메서드 확인 필요")}`
+        : localize`${inv.routeCount || 0}개 API 파일`,
       "code",
-      route ? [route.file] : inv.routes?.slice(0, 4) || ["실행 파일 기준"],
+      route ? [route.file] : inv.routes?.slice(0, 4) || [translateText("실행 파일 기준")],
       295,
       65,
       route?.language ||
@@ -55,27 +56,27 @@ export function buildArchitecture(project, routeFile = "") {
         )?.name ||
         "",
     );
-    if (ui && !route) edge("screen", "api", "요청 (추정)");
+    if (ui && !route) edge("screen", "api", translateText("요청 (추정)"));
   }
   if (route?.links.length) {
     add(
       "module",
-      "연결된 내부 모듈",
-      `${route.links.length}개 import 연결`,
+      translateText("연결된 내부 모듈"),
+      localize`${route.links.length}개 import 연결`,
       "folder",
       route.links.slice(0, 8),
       555,
       65,
       route.language,
     );
-    edge("api", "module", "코드 import", true);
+    edge("api", "module", translateText("코드 import"), true);
   }
   const routeDb = route ? route.dbUsed || [] : inv.db || [];
   const routeAi = route ? route.aiUsed || [] : inv.ai || [];
   if (routeDb.length) {
     add(
       "db",
-      native ? "기기 내 저장" : "데이터 저장",
+      native ? translateText("기기 내 저장") : translateText("데이터 저장"),
       routeDb
         .map((k) => k.replace("@supabase/supabase-js", "Supabase"))
         .join(", ")
@@ -101,14 +102,14 @@ export function buildArchitecture(project, routeFile = "") {
             ? "screen"
             : "code",
       "db",
-      route ? (direct ? "SDK import" : "간접 import") : "의존성 (추정)",
+      route ? (direct ? "SDK import" : translateText("간접 import")) : translateText("의존성 (추정)"),
       !!route,
     );
   }
   if (routeAi.length) {
     add(
       "ai",
-      "외부 AI",
+      translateText("외부 AI"),
       routeAi.join(", ").slice(0, 30),
       "ai",
       routeAi,
@@ -126,33 +127,33 @@ export function buildArchitecture(project, routeFile = "") {
             ? "screen"
             : "code",
       "ai",
-      route ? (direct ? "SDK import" : "간접 import") : "AI 호출 (추정)",
+      route ? (direct ? "SDK import" : translateText("간접 import")) : translateText("AI 호출 (추정)"),
       !!route,
     );
   }
   if (project.vercel && !route) {
     add(
       "deploy",
-      "Vercel 배포",
-      "로컬 프로젝트 연결 파일",
+      translateText("Vercel 배포"),
+      translateText("로컬 프로젝트 연결 파일"),
       "cloud",
       [".vercel/project.json"],
       295,
       435,
-      "배포",
+      translateText("배포"),
     );
-    if (ui || backend) edge(ui ? "screen" : "api", "deploy", "배포 연결");
+    if (ui || backend) edge(ui ? "screen" : "api", "deploy", translateText("배포 연결"));
   }
   if (!ui && !backend) {
     add(
       "code",
-      native ? "네이티브 코드" : "프로젝트 코드",
-      `${inv.sourceCount || 0}개 소스 파일`,
+      native ? translateText("네이티브 코드") : translateText("프로젝트 코드"),
+      localize`${inv.sourceCount || 0}개 소스 파일`,
       "folder",
-      ["소스 파일 목록"],
+      [translateText("소스 파일 목록")],
       35,
       65,
-      languages[0]?.name || "문서",
+      languages[0]?.name || translateText("문서"),
     );
   }
   if (route) {
@@ -182,8 +183,8 @@ export function buildArchitecture(project, routeFile = "") {
     nodes,
     edges: edges.filter((e) => ids.has(e.from) && ids.has(e.to)),
     caption: route
-      ? "실선은 소스의 import, 점선은 의존성으로 추정한 연결입니다."
-      : "발견한 페이지·API·패키지로 구성했습니다. 실제 호출 순서는 검토가 필요합니다.",
+      ? translateText("실선은 소스의 import, 점선은 의존성으로 추정한 연결입니다.")
+      : translateText("발견한 페이지·API·패키지로 구성했습니다. 실제 호출 순서는 검토가 필요합니다."),
   };
 }
 export function languageColor(name) {

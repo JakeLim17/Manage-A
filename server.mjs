@@ -1388,6 +1388,8 @@ export const server = http.createServer(async (req, res) => {
     const assets = {
       "/": "index.html",
       "/app.js": "app.js",
+      "/i18n.js": "i18n.js",
+      "/locale-en.js": "locale-en.js",
       "/graph.js": "graph.js",
       "/insights.js": "insights.js",
       "/help.js": "help.js",

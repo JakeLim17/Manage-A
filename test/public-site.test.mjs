@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
+import { t as translateText, ui as localize } from '../public/i18n.js';
 const root = new URL('../website/',import.meta.url);
 const read = p => readFile(new URL(p,root),'utf8');
 test('공개 페이지는 한영 경로와 검색 메타 정보를 제공하고 로컬 API를 호출하지 않는다',async()=>{
@@ -34,7 +35,7 @@ test('예시 지도 선택과 키보드 버튼의 상태가 설명 및 정지 �
 test('연결 폼은 미정의 변수를 참조하지 않고 기존 계정 ID와 별칭을 보존한다',async()=>{
  const app=await readFile(new URL('../public/app.js',import.meta.url),'utf8');
  const forms={};let sent;
- const context={data:{mode:'local',serviceAccountRegistry:[{id:'account-1',label:'기존'}]},serviceNames:{vercel:'Vercel'},showModal:()=>{},toast:()=>{},esc:String,field:()=>'', $:s=>forms[s] ||= {},FormData:class {get(k){return {key:'synthetic-test-token',label:'테스트 계정'}[k] ?? null}},saveForm:async(form,url,value)=>sent={url,value}};
+ const context={translateText,localize,data:{mode:'local',serviceAccountRegistry:[{id:'account-1',label:'기존'}]},serviceNames:{vercel:'Vercel'},showModal:()=>{},toast:()=>{},esc:String,field:()=>'', $:s=>forms[s] ||= {},FormData:class {get(k){return {key:'synthetic-test-token',label:'테스트 계정'}[k] ?? null}},saveForm:async(form,url,value)=>sent={url,value}};
  vm.runInNewContext(app.slice(app.indexOf('function connectApiUsage('),app.indexOf('function compactApiUsage(')),context);
  context.connectApiUsage('Claude');await forms['#api-connect-form'].onsubmit({preventDefault(){},target:{}});
  assert.equal(sent.url,'/api/connections/api-usage');assert.equal(sent.value.provider,'Claude');
