@@ -55,11 +55,28 @@ test('자동 한도와 CLI 별칭은 번역하고 직접 적은 값은 유지한
  assert.equal(accountAlias({kind:'token',label:'설정'}),'설정');assert.equal(accountAlias({kind:'cli',label:'현재 CLI 로그인'}),'Current CLI sign-in');
 });
 
-test('미저장 입력이 있는 언어 전환은 취소할 수 있고 입력을 저장하지 않는다',async()=>{
+test('언어 토글은 취소 시 선택·미저장 내용을 유지하고 승인 시에만 전환한다',async()=>{
  const app=await fs.readFile(new URL('../public/app.js',import.meta.url),'utf8');
  const code=app.slice(app.indexOf('function bindLanguage()'),app.indexOf('function settingsView()'));
- let handler,changed;const el={value:'ko',addEventListener:(event,fn)=>handler=fn};
+ let handler,changed,eventType;const el={dataset:{language:'ko'},addEventListener:(event,fn)=>{eventType=event;handler=fn}};
  const ctx={document:{querySelectorAll:()=>[el]},formDirty:true,window:{confirm:()=>false},getLocale:()=> 'en',setLocale:v=>changed=v};
- vm.runInNewContext(code,ctx);ctx.bindLanguage();handler({target:el});assert.equal(changed,undefined);assert.equal(el.value,'en');assert.equal(ctx.formDirty,true);
- ctx.window.confirm=()=>true;el.value='ko';handler({target:el});assert.equal(changed,'ko');assert.equal(ctx.formDirty,false);
+ vm.runInNewContext(code,ctx);ctx.bindLanguage();assert.equal(eventType,'click');handler();assert.equal(changed,undefined);assert.equal(ctx.formDirty,true);
+ ctx.window.confirm=()=>true;handler();assert.equal(changed,'ko');assert.equal(ctx.formDirty,false);
+});
+test('현재 언어를 다시 누르면 재로드와 미저장 입력 확인을 하지 않는다',async()=>{
+ const app=await fs.readFile(new URL('../public/app.js',import.meta.url),'utf8');
+ const code=app.slice(app.indexOf('function bindLanguage()'),app.indexOf('function settingsView()'));
+ let handler;const ctx={document:{querySelectorAll:()=>[{dataset:{language:'en'},addEventListener:(_,fn)=>handler=fn}]},formDirty:true,window:{confirm:()=>assert.fail('확인 불필요')},getLocale:()=> 'en',setLocale:()=>assert.fail('재로드 불필요')};
+ vm.runInNewContext(code,ctx);ctx.bindLanguage();handler();assert.equal(ctx.formDirty,true);
+});
+test('언어 토글은 두 언어 모두 접근 가능한 이름·선택 상태·버튼 타입을 제공한다',async()=>{
+ const app=await fs.readFile(new URL('../public/app.js',import.meta.url),'utf8');
+ const code=app.slice(app.indexOf('function languagePicker()'),app.indexOf('function bindLanguage()'));
+ for(const locale of ['ko','en']){
+  const ctx={getLocale:()=>locale};vm.runInNewContext(code,ctx);const html=ctx.languagePicker();
+  assert.ok(html.includes('role="group"'));assert.equal((html.match(/type="button"/g)||[]).length,2);
+  assert.equal((html.match(/aria-pressed="true"/g)||[]).length,1);
+  assert.ok(html.includes(`data-language="${locale}" lang="${locale}" aria-pressed="true"`));
+  assert.ok(html.includes('aria-label="English"'));assert.ok(html.includes('aria-label="한국어"'));
+ }
 });
