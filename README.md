@@ -1,5 +1,7 @@
 # Manage-A — 로컬 프로젝트 관리 대시보드
 
+[소개 페이지 · 서비스 지도 체험](https://jakelim17.github.io/Manage-A/) · [English introduction](https://jakelim17.github.io/Manage-A/en/)
+
 [한국어](README.md) · [English](README.en.md)
 
 **프로젝트 시각화·AI 사용량·방문 통계를 내 컴퓨터에서 확인하세요.**

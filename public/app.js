@@ -452,6 +452,19 @@ function defaultFlow(p) {
   };
 }
 let activeNode = "";
+function componentExplanation(node) {
+  const descriptions = {
+    screen: ["사람이 보고 누르는 곳", "버튼·입력창·결과 화면을 담당합니다. 화면이 있다는 사실만으로 서버나 데이터베이스 연결이 확인되는 것은 아닙니다."],
+    api: ["요청을 받아 처리하는 곳", "화면에서 보낸 요청을 검사하고 필요한 작업을 수행합니다. 파일 연결은 확인할 수 있지만 실제 요청 성공 여부는 별도 점검이 필요합니다."],
+    module: ["처리 코드를 나눈 부품", "다른 코드에서 불러와 사용하는 함수와 도구입니다. 실선은 코드가 서로 참조한다는 뜻이며, 실행 순서를 보장하지 않습니다."],
+    db: ["데이터를 보관하는 곳", "저장·조회에 쓰는 도구나 설정이 발견됐습니다. 로그인한 계정과 실제 읽기·쓰기 가능 여부는 서비스 계정과 상태 점검에서 확인하세요."],
+    deploy: ["인터넷에서 서비스를 실행하는 곳", "배포 제공자와 연결된 설정입니다. 로컬 연결 파일의 존재와 운영 사이트가 정상 작동하는지는 구분해야 합니다."],
+    ai: ["외부 AI에 요청하는 곳", "AI SDK나 의존성이 발견됐습니다. 실제 호출·비용·전송 데이터는 이 지도에서 측정하지 않습니다."],
+    code: ["프로젝트의 소스 코드", "현재 분석에서 발견된 파일입니다. 확인되지 않은 서버·저장소 연결은 지도에 임의로 추가하지 않습니다."],
+  };
+  const [title, detail] = descriptions[node.id] || ["직접 정의한 구성 요소", "직접 적은 설명입니다. 아래 근거와 실제 운영 상태를 함께 확인하세요."];
+  return `<div class="plain-explanation"><strong>${esc(title)}</strong><p>${esc(detail)}</p></div>`;
+}
 function flowView() {
   const p = project();
   if (!p) return empty("프로젝트가 없어요", "프로젝트 폴더를 확인해 주세요.");
@@ -465,9 +478,9 @@ function flowView() {
     r = inv.routeDetails?.find((r) => (r.key || r.file) === routeFile);
   return `<div class="section-toolbar flow-toolbar">${selector()}<div class="filter-tabs"><button data-flow-mode="architecture" class="${flowMode === "architecture" ? "active" : ""}">코드 연결 구조</button><button data-flow-mode="custom" class="${flowMode === "custom" ? "active" : ""}">직접 정의한 흐름</button></div><div class="flow-controls"><button class="button" id="pause">${icon(paused ? "play" : "pause")}${paused ? "재생" : "일시정지"}</button><select id="speed" aria-label="재생 속도">${[0.5, 1, 2].map((v) => `<option value="${v}" ${v === speed ? "selected" : ""}>${v}×</option>`).join("")}</select><button class="button" id="edit-flow">${icon("settings")} 구조 편집</button></div></div>
  <div class="project-ribbon"><div><strong>${esc(p.name)}</strong><span>${esc(p.description)}</span></div>${badge(labels[p.status], p.status === "development" ? "amber" : "gray")}<button class="button" data-nav="accounts">서비스 계정 보기</button><span class="ribbon-stat">${inv.sourceCount || 0}개 소스</span><span class="ribbon-stat">${inv.pageCount || 0}개 페이지</span><span class="ribbon-stat">${inv.routeCount || 0}개 API</span></div>
- <div class="flow-layout">${card("구조와 처리 경로", `<div class="flow-subtoolbar"><label>기능별 연결 보기<select id="route-select" aria-label="기능별 API 선택"><option value="">프로젝트 전체 구조</option>${(inv.routeDetails || []).map((v) => `<option value="${esc(v.key || v.file)}" ${(v.key || v.file) === routeFile ? "selected" : ""}>${esc(v.methods.join("/") || "API")} ${esc(v.endpoint)}</option>`).join("")}</select></label><div class="graph-legend"><span><i class="solid-line"></i>코드 import</span><span><i class="dashed-line"></i>추정 / 설정 연결</span></div></div><div class="flow-notice">${badge(flowMode === "custom" ? "직접 정의" : "소스 기반 분석", flowMode === "custom" ? "green" : "gray")}<span>${esc(f.caption || "직접 정리한 설명용 처리 순서입니다.")}</span></div>${flowSvg(f)}<div class="steps">${f.nodes.map((v) => `<button data-node="${esc(v.id)}" class="${activeNode === v.id ? "active" : ""}">${icon(v.kind || "flow")}${esc(v.label)}</button>`).join("")}</div><p class="card-note">이동하는 점은 경로 설명용입니다. 실제 요청량·호출 순서를 측정한 화면이 아닙니다.</p>`)}<div>${card(
+ <div class="flow-layout">${card("서비스 지도", `<div class="flow-subtoolbar"><label>기능별 연결 보기<select id="route-select" aria-label="기능별 API 선택"><option value="">프로젝트 전체 구조</option>${(inv.routeDetails || []).map((v) => `<option value="${esc(v.key || v.file)}" ${(v.key || v.file) === routeFile ? "selected" : ""}>${esc(v.methods.join("/") || "API")} ${esc(v.endpoint)}</option>`).join("")}</select></label><div class="graph-legend"><span><i class="solid-line"></i>코드 import</span><span><i class="dashed-line"></i>추정 / 설정 연결</span></div></div><div class="flow-notice">${badge(flowMode === "custom" ? "직접 정의" : "소스 기반 분석", flowMode === "custom" ? "green" : "gray")}<span>${esc(f.caption || "직접 정리한 설명용 처리 순서입니다.")}</span></div>${flowSvg(f)}<div class="steps">${f.nodes.map((v) => `<button data-node="${esc(v.id)}" class="${activeNode === v.id ? "active" : ""}">${icon(v.kind || "flow")}${esc(v.label)}</button>`).join("")}</div><p class="card-note">이동하는 점은 경로 설명용입니다. 실제 요청량·호출 순서를 측정한 화면이 아닙니다.</p>`)}<div>${card(
    "선택한 구성 요소",
-   `<div class="inspector node-inspector">${icon(n.kind || "flow")}<h3>${esc(n.label)}</h3><p>${esc(n.detail || "설명을 추가하세요.")}</p>${n.language ? badge(n.language, "green") : ""}<h4>확인 근거</h4><div class="evidence-list">${(n.evidence || ["직접 입력한 단계"]).map((v) => `<code>${esc(v)}</code>`).join("")}</div><h4>다음 연결</h4><div class="next-links">${
+   `<div class="inspector node-inspector">${icon(n.kind || "flow")}<h3>${esc(n.label)}</h3><p>${esc(n.detail || "설명을 추가하세요.")}</p>${n.language ? badge(n.language, "green") : ""}${componentExplanation(n)}<h4>확인 근거</h4><div class="evidence-list">${(n.evidence || ["직접 입력한 단계"]).map((v) => `<code>${esc(v)}</code>`).join("")}</div><h4>다음 연결</h4><div class="next-links">${
      f.edges
        .filter((e) => e.from === n.id)
        .map(
@@ -1889,7 +1902,6 @@ function connectApiUsage(provider) {
     await saveForm(e.target, "/api/connections/api-usage", {
       provider,
       label: new FormData(e.target).get("label"),
-      ...(accountId ? {id: accountId} : {}),
       key: new FormData(e.target).get("key"),
     });
   };
@@ -2127,6 +2139,8 @@ function connectService(provider, accountId = "") {
     e.preventDefault();
     await saveForm(e.target, "/api/connections/service-accounts", {
       provider,
+      label: new FormData(e.target).get("label"),
+      ...(accountId ? { id: accountId } : {}),
       key: new FormData(e.target).get("key"),
     });
   };

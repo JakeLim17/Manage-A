@@ -1,5 +1,7 @@
 # Manage-A — Local Project Dashboard
 
+[Interactive introduction](https://jakelim17.github.io/Manage-A/en/) · [한국어 소개](https://jakelim17.github.io/Manage-A/)
+
 [English](README.en.md) · [한국어](README.md)
 
 **Visualize your projects and track AI usage and web analytics on your own computer.**
