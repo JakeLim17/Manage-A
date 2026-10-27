@@ -31,7 +31,9 @@
 ## MA-06 — MIT 라이선스 공개 / 2026-10-28
 
 - 사용자 결정: MIT 라이선스로 공개 승인.
-- 상태: 진행 중. LICENSE 표준 원문(출처: GitHub REST /licenses/mit), package.json SPDX, 한·영 README·소개 페이지 고지 반영.
+- 상태: 완료(검증됨). LICENSE 표준 원문(출처: GitHub REST /licenses/mit), package.json SPDX, 한·영 README·소개 페이지 고지 반영.
 - 작업 시작 기준: main 23ead02, 미커밋 없음, 등록 작업본 1곳, 누락 대조 0건. 작업 브랜치 codex/mit-license.
 - 이전 ‘라이선스 결정 대기’ 기록은 당시 상태이며, 이번 승인으로 대체됨.
 - 기존 개인 데이터 보호·한영 체험·한국어 앱이라는 안내는 유지. 새 과금·권한·자료 전송·알림 없음.
+
+MA-06 검증: main d85a427, GitHub 라이선스 API SPDX=MIT 확인. 공개 페이지 회귀 3개 통과. Pages 작업 40567815750 성공. 공개 한·영 URL HTTP 200, MIT 안내 포함, 로컬 HTML과 바이트 일치. 신규 빌드·dd 폴더 없음, 삭제 없음.
